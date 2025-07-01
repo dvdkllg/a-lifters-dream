@@ -1,266 +1,247 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-const commonExercises = [
-  'Squat', 'Bench Press', 'Deadlift', 'Overhead Press', 'Barbell Row',
-  'Pull-ups', 'Dips', 'Bulgarian Split Squat', 'Romanian Deadlift', 'Hip Thrust',
-  'Incline Bench Press', 'Close-Grip Bench Press', 'Sumo Deadlift', 'Front Squat', 'Goblet Squat',
-  'Lat Pulldown', 'Seated Row', 'Chest Fly', 'Lateral Raise', 'Bicep Curl',
-  'Tricep Extension', 'Face Pull', 'Leg Press', 'Leg Curl', 'Leg Extension',
-  'Calf Raise', 'Plank', 'Russian Twist', 'Mountain Climber', 'Burpee',
-  'Kettlebell Swing', 'Turkish Get-Up', 'Farmer\'s Walk', 'Box Jump', 'Jump Squat',
-  'Push-up', 'Pike Push-up', 'Handstand Push-up', 'Archer Squat', 'Pistol Squat',
-  'Single Leg Deadlift', 'Step-up', 'Reverse Lunge', 'Walking Lunge', 'Wall Sit',
-  'Glute Bridge', 'Bird Dog', 'Dead Bug', 'Side Plank', 'Bear Crawl'
-];
+interface OneRMResult {
+  formula: string;
+  result: number;
+}
 
 const CalculatorTab = () => {
-  const [oneRMData, setOneRMData] = useState({
-    exercise: '',
-    weight: '',
-    reps: '',
-    rpe: ''
-  });
-
-  const [rpeData, setRPEData] = useState({
-    exercise: '',
-    oneRM: '',
-    targetReps: '',
-    targetRPE: ''
-  });
-
-  const [oneRMResult, setOneRMResult] = useState<number | null>(null);
-  const [rpeResult, setRPEResult] = useState<number | null>(null);
+  const [weight, setWeight] = useState('');
+  const [reps, setReps] = useState('');
+  const [rpe, setRpe] = useState('');
+  const [oneRMResults, setOneRMResults] = useState<OneRMResult[]>([]);
+  const [percentageWeight, setPercentageWeight] = useState('');
+  const [percentage, setPercentage] = useState('');
+  const [percentageResult, setPercentageResult] = useState('');
 
   const calculateOneRM = () => {
-    const weight = parseFloat(oneRMData.weight);
-    const reps = parseInt(oneRMData.reps);
-    const rpe = parseFloat(oneRMData.rpe);
-
-    if (!weight || !reps || !rpe) return;
-
-    // Scientifically accurate: Epley formula with RPE adjustment
-    // 1RM = weight × (1 + reps/30)
-    const baseOneRM = weight * (1 + reps / 30);
+    const w = parseFloat(weight);
+    const r = parseInt(reps);
     
-    // RPE adjustment: Higher RPE means closer to true max
-    // RPE 10 = 100%, RPE 9 = ~97%, RPE 8 = ~93%, etc.
-    const rpeMultiplier = 0.7 + (rpe / 10) * 0.3; // More conservative adjustment
-    const adjustedOneRM = baseOneRM / rpeMultiplier;
+    if (!w || !r || r < 1) return;
+
+    const results: OneRMResult[] = [];
     
-    setOneRMResult(Math.round(adjustedOneRM * 10) / 10);
+    // Epley Formula
+    const epley = w * (1 + r / 30);
+    results.push({ formula: 'Epley', result: Math.round(epley * 10) / 10 });
+    
+    // Brzycki Formula
+    const brzycki = w / (1.0278 - 0.0278 * r);
+    results.push({ formula: 'Brzycki', result: Math.round(brzycki * 10) / 10 });
+    
+    // McGlothin Formula
+    const mcglothin = (100 * w) / (101.3 - 2.67123 * r);
+    results.push({ formula: 'McGlothin', result: Math.round(mcglothin * 10) / 10 });
+    
+    // Lombardi Formula
+    const lombardi = w * Math.pow(r, 0.10);
+    results.push({ formula: 'Lombardi', result: Math.round(lombardi * 10) / 10 });
+
+    setOneRMResults(results);
   };
 
   const calculateRPEWeight = () => {
-    const oneRM = parseFloat(rpeData.oneRM);
-    const reps = parseInt(rpeData.targetReps);
-    const rpe = parseFloat(rpeData.targetRPE);
-
-    if (!oneRM || !reps || !rpe) return;
-
-    // Scientifically accurate RPE chart based on research
-    const rpeChart: { [key: string]: { [key: number]: number } } = {
-      '6.5': { 1: 0.86, 2: 0.82, 3: 0.79, 4: 0.76, 5: 0.73, 6: 0.70, 7: 0.67, 8: 0.64, 9: 0.61, 10: 0.58 },
-      '7': { 1: 0.89, 2: 0.85, 3: 0.82, 4: 0.79, 5: 0.76, 6: 0.73, 7: 0.70, 8: 0.67, 9: 0.64, 10: 0.61 },
-      '7.5': { 1: 0.92, 2: 0.88, 3: 0.85, 4: 0.82, 5: 0.79, 6: 0.76, 7: 0.73, 8: 0.70, 9: 0.67, 10: 0.64 },
-      '8': { 1: 0.95, 2: 0.91, 3: 0.88, 4: 0.85, 5: 0.82, 6: 0.79, 7: 0.76, 8: 0.73, 9: 0.70, 10: 0.67 },
-      '8.5': { 1: 0.97, 2: 0.94, 3: 0.91, 4: 0.88, 5: 0.85, 6: 0.82, 7: 0.79, 8: 0.76, 9: 0.73, 10: 0.70 },
-      '9': { 1: 1.00, 2: 0.97, 3: 0.94, 4: 0.91, 5: 0.88, 6: 0.85, 7: 0.82, 8: 0.79, 9: 0.76, 10: 0.73 },
-      '9.5': { 1: 1.00, 2: 1.00, 3: 0.97, 4: 0.94, 5: 0.91, 6: 0.88, 7: 0.85, 8: 0.82, 9: 0.79, 10: 0.76 },
-      '10': { 1: 1.00, 2: 1.00, 3: 1.00, 4: 0.97, 5: 0.94, 6: 0.91, 7: 0.88, 8: 0.85, 9: 0.82, 10: 0.79 }
-    };
-
-    const percentage = rpeChart[rpe.toString()]?.[reps] || 0.7;
-    const weight = oneRM * percentage;
+    const w = parseFloat(weight);
+    const r = parseInt(reps);
+    const targetRPE = parseFloat(rpe);
     
-    setRPEResult(Math.round(weight * 10) / 10);
+    if (!w || !r || !targetRPE) return;
+
+    // Calculate 1RM using Epley formula
+    const oneRM = w * (1 + r / 30);
+    
+    // RPE to percentage mapping (approximate)
+    const rpePercentages: { [key: number]: number } = {
+      10: 100, 9.5: 97, 9: 93, 8.5: 90, 8: 87, 
+      7.5: 83, 7: 80, 6.5: 77, 6: 73, 5.5: 70, 5: 67
+    };
+    
+    const percentage = rpePercentages[targetRPE] || 70;
+    const recommendedWeight = (oneRM * percentage) / 100;
+    
+    setPercentageResult(`${Math.round(recommendedWeight * 10) / 10} lbs (${percentage}% of 1RM)`);
   };
 
-  const getPercentageTable = (oneRM: number) => {
-    const percentages = [100, 95, 90, 85, 80, 75, 70, 65, 60, 55, 50];
-    return percentages.map(percent => ({
-      percentage: percent,
-      weight: Math.round(oneRM * (percent / 100) * 10) / 10
-    }));
+  const calculatePercentage = () => {
+    const w = parseFloat(percentageWeight);
+    const p = parseFloat(percentage);
+    
+    if (!w || !p) return;
+    
+    const result = (w * p) / 100;
+    setPercentageResult(`${Math.round(result * 10) / 10} lbs`);
   };
 
   return (
-    <div className="p-4">
-      <h2 className="text-2xl font-bold mb-4">Calculators</h2>
+    <div className="p-4 space-y-6 bg-black min-h-full">
+      <h2 className="text-2xl font-bold text-center text-blue-400">Calculators</h2>
       
-      <Tabs defaultValue="onerm" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2 bg-slate-800">
-          <TabsTrigger value="onerm" className="data-[state=active]:bg-blue-600">1RM Calculator</TabsTrigger>
-          <TabsTrigger value="rpe" className="data-[state=active]:bg-blue-600">RPE Calculator</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="onerm">
-          <Card className="bg-slate-800 border-slate-700">
-            <CardHeader>
-              <CardTitle>1RM Calculator</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="exercise-onerm">Exercise</Label>
-                <Select value={oneRMData.exercise} onValueChange={(value) => setOneRMData({...oneRMData, exercise: value})}>
-                  <SelectTrigger className="bg-slate-700 border-slate-600">
-                    <SelectValue placeholder="Select exercise" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-slate-700 border-slate-600">
-                    <SelectItem value="Squat">Squat</SelectItem>
-                    <SelectItem value="Bench Press">Bench Press</SelectItem>
-                    <SelectItem value="Deadlift">Deadlift</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div>
-                <Label htmlFor="weight">Weight (kg)</Label>
-                <Input
-                  id="weight"
-                  type="number"
-                  value={oneRMData.weight}
-                  onChange={(e) => setOneRMData({...oneRMData, weight: e.target.value})}
-                  className="bg-slate-700 border-slate-600"
-                  placeholder="Enter weight"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="reps">Repetitions</Label>
-                <Input
-                  id="reps"
-                  type="number"
-                  value={oneRMData.reps}
-                  onChange={(e) => setOneRMData({...oneRMData, reps: e.target.value})}
-                  className="bg-slate-700 border-slate-600"
-                  placeholder="Enter reps"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="rpe-onerm">RPE (6.5-10)</Label>
-                <Select value={oneRMData.rpe} onValueChange={(value) => setOneRMData({...oneRMData, rpe: value})}>
-                  <SelectTrigger className="bg-slate-700 border-slate-600">
-                    <SelectValue placeholder="Select RPE" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-slate-700 border-slate-600">
-                    {['6.5', '7', '7.5', '8', '8.5', '9', '9.5', '10'].map(rpe => (
-                      <SelectItem key={rpe} value={rpe}>RPE {rpe}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <Button onClick={calculateOneRM} className="w-full bg-blue-600 hover:bg-blue-700">
-                Calculate 1RM
-              </Button>
-              
-              {oneRMResult && (
-                <div className="mt-4 space-y-4">
-                  <div className="text-center p-4 bg-slate-700 rounded-lg">
-                    <h3 className="text-xl font-bold text-green-400">Estimated 1RM: {oneRMResult} kg</h3>
-                  </div>
-                  
-                  <div className="bg-slate-700 rounded-lg p-4">
-                    <h4 className="font-semibold mb-3">Training Percentages</h4>
-                    <div className="grid grid-cols-2 gap-2 text-sm">
-                      {getPercentageTable(oneRMResult).map(({ percentage, weight }) => (
-                        <div key={percentage} className="flex justify-between p-2 bg-slate-600 rounded">
-                          <span>{percentage}%</span>
-                          <span>{weight} kg</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+      {/* 1RM Calculator */}
+      <Card className="bg-gray-900 border-blue-800">
+        <CardHeader>
+          <CardTitle className="text-blue-400">1RM Calculator</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="weight" className="text-gray-300">Weight (lbs)</Label>
+              <Input
+                id="weight"
+                type="number"
+                value={weight}
+                onChange={(e) => setWeight(e.target.value)}
+                className="bg-gray-800 border-gray-700 text-white"
+                placeholder="225"
+              />
+            </div>
+            <div>
+              <Label htmlFor="reps" className="text-gray-300">Reps</Label>
+              <Input
+                id="reps"
+                type="number"
+                value={reps}
+                onChange={(e) => setReps(e.target.value)}
+                className="bg-gray-800 border-gray-700 text-white"
+                placeholder="5"
+              />
+            </div>
+          </div>
+          
+          <Button
+            onClick={calculateOneRM}
+            className="w-full bg-blue-600 hover:bg-blue-700"
+          >
+            Calculate 1RM
+          </Button>
+          
+          {oneRMResults.length > 0 && (
+            <div className="space-y-2">
+              <h4 className="font-semibold text-blue-400">Results:</h4>
+              {oneRMResults.map((result, index) => (
+                <div key={index} className="flex justify-between bg-gray-800 p-2 rounded">
+                  <span className="text-gray-300">{result.formula}:</span>
+                  <span className="text-white font-bold">{result.result} lbs</span>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="rpe">
-          <Card className="bg-slate-800 border-slate-700">
-            <CardHeader>
-              <CardTitle>RPE Calculator</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="exercise-rpe">Exercise</Label>
-                <Select value={rpeData.exercise} onValueChange={(value) => setRPEData({...rpeData, exercise: value})}>
-                  <SelectTrigger className="bg-slate-700 border-slate-600">
-                    <SelectValue placeholder="Select exercise" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-slate-700 border-slate-600 max-h-60">
-                    {commonExercises.map(exercise => (
-                      <SelectItem key={exercise} value={exercise}>{exercise}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div>
-                <Label htmlFor="onerm">Current 1RM (kg)</Label>
-                <Input
-                  id="onerm"
-                  type="number"
-                  value={rpeData.oneRM}
-                  onChange={(e) => setRPEData({...rpeData, oneRM: e.target.value})}
-                  className="bg-slate-700 border-slate-600"
-                  placeholder="Enter your 1RM"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="target-reps">Target Reps</Label>
-                <Input
-                  id="target-reps"
-                  type="number"
-                  value={rpeData.targetReps}
-                  onChange={(e) => setRPEData({...rpeData, targetReps: e.target.value})}
-                  className="bg-slate-700 border-slate-600"
-                  placeholder="Enter target reps"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="target-rpe">Target RPE</Label>
-                <Select value={rpeData.targetRPE} onValueChange={(value) => setRPEData({...rpeData, targetRPE: value})}>
-                  <SelectTrigger className="bg-slate-700 border-slate-600">
-                    <SelectValue placeholder="Select target RPE" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-slate-700 border-slate-600">
-                    {['6.5', '7', '7.5', '8', '8.5', '9', '9.5', '10'].map(rpe => (
-                      <SelectItem key={rpe} value={rpe}>RPE {rpe}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <Button onClick={calculateRPEWeight} className="w-full bg-green-600 hover:bg-green-700">
-                Calculate Weight
-              </Button>
-              
-              {rpeResult && (
-                <div className="mt-4">
-                  <div className="text-center p-4 bg-slate-700 rounded-lg">
-                    <h3 className="text-xl font-bold text-green-400">Use: {rpeResult} kg</h3>
-                    <p className="text-sm text-slate-400 mt-1">
-                      For {rpeData.targetReps} reps at RPE {rpeData.targetRPE}
-                    </p>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* RPE Calculator */}
+      <Card className="bg-gray-900 border-blue-800">
+        <CardHeader>
+          <CardTitle className="text-blue-400">RPE Weight Calculator</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <Label htmlFor="rpeWeight" className="text-gray-300">Known Weight</Label>
+              <Input
+                id="rpeWeight"
+                type="number"
+                value={weight}
+                onChange={(e) => setWeight(e.target.value)}
+                className="bg-gray-800 border-gray-700 text-white"
+                placeholder="225"
+              />
+            </div>
+            <div>
+              <Label htmlFor="rpeReps" className="text-gray-300">Known Reps</Label>
+              <Input
+                id="rpeReps"
+                type="number"
+                value={reps}
+                onChange={(e) => setReps(e.target.value)}
+                className="bg-gray-800 border-gray-700 text-white"
+                placeholder="5"
+              />
+            </div>
+            <div>
+              <Label htmlFor="targetRpe" className="text-gray-300">Target RPE</Label>
+              <Select value={rpe} onValueChange={setRpe}>
+                <SelectTrigger className="bg-gray-800 border-gray-700 text-white">
+                  <SelectValue placeholder="RPE" />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-800 border-gray-700">
+                  {[10, 9.5, 9, 8.5, 8, 7.5, 7, 6.5, 6, 5.5, 5].map(rpeValue => (
+                    <SelectItem key={rpeValue} value={rpeValue.toString()} className="text-white hover:bg-gray-700">
+                      RPE {rpeValue}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          
+          <Button
+            onClick={calculateRPEWeight}
+            className="w-full bg-blue-600 hover:bg-blue-700"
+          >
+            Calculate RPE Weight
+          </Button>
+          
+          {percentageResult && (
+            <div className="bg-gray-800 p-3 rounded">
+              <span className="text-blue-400 font-semibold">Recommended Weight: </span>
+              <span className="text-white">{percentageResult}</span>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Percentage Calculator */}
+      <Card className="bg-gray-900 border-blue-800">
+        <CardHeader>
+          <CardTitle className="text-blue-400">Percentage Calculator</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="percentageWeight" className="text-gray-300">Weight (lbs)</Label>
+              <Input
+                id="percentageWeight"
+                type="number"
+                value={percentageWeight}
+                onChange={(e) => setPercentageWeight(e.target.value)}
+                className="bg-gray-800 border-gray-700 text-white"
+                placeholder="300"
+              />
+            </div>
+            <div>
+              <Label htmlFor="percentage" className="text-gray-300">Percentage (%)</Label>
+              <Input
+                id="percentage"
+                type="number"
+                value={percentage}
+                onChange={(e) => setPercentage(e.target.value)}
+                className="bg-gray-800 border-gray-700 text-white"
+                placeholder="85"
+              />
+            </div>
+          </div>
+          
+          <Button
+            onClick={calculatePercentage}
+            className="w-full bg-blue-600 hover:bg-blue-700"
+          >
+            Calculate
+          </Button>
+          
+          {percentageResult && (
+            <div className="bg-gray-800 p-3 rounded">
+              <span className="text-blue-400 font-semibold">Result: </span>
+              <span className="text-white font-bold">{percentageResult}</span>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };

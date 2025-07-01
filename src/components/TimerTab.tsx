@@ -5,8 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Play, Pause, Square, RotateCcw, Delete } from 'lucide-react';
 
 const TimerTab = () => {
-  const [time, setTime] = useState(0); // time in seconds
-  const [originalTime, setOriginalTime] = useState(0); // for progress calculation
+  const [time, setTime] = useState(0);
+  const [originalTime, setOriginalTime] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [inputTime, setInputTime] = useState('00:00');
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -17,8 +17,7 @@ const TimerTab = () => {
         setTime(prevTime => {
           if (prevTime <= 1) {
             setIsRunning(false);
-            // Play notification sound or vibration here
-            alert('Timer finished!');
+            alert('Rest complete! Time to get back to work! 💪');
             return 0;
           }
           return prevTime - 1;
@@ -42,14 +41,6 @@ const TimerTab = () => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  const setPresetTime = (minutes: number) => {
-    const seconds = minutes * 60;
-    setTime(seconds);
-    setOriginalTime(seconds);
-    setIsRunning(false);
-    setInputTime(formatTime(seconds));
   };
 
   const handleNumpadInput = (digit: string) => {
@@ -76,12 +67,12 @@ const TimerTab = () => {
 
     // Handle digit input
     const cleanTime = inputTime.replace(':', '');
-    if (cleanTime.length >= 4) return; // Max 99:59
+    if (cleanTime.length >= 4) return;
     
     const newTime = (cleanTime + digit).padStart(4, '0');
     const formatted = `${newTime.slice(0, 2)}:${newTime.slice(2)}`;
     
-    // Validate seconds (max 59)
+    // Validate seconds
     const secs = parseInt(newTime.slice(2));
     if (secs > 59) return;
     
@@ -91,6 +82,14 @@ const TimerTab = () => {
     const totalSeconds = (mins * 60) + secs;
     setTime(totalSeconds);
     setOriginalTime(totalSeconds);
+  };
+
+  const setPresetTime = (minutes: number) => {
+    const seconds = minutes * 60;
+    setTime(seconds);
+    setOriginalTime(seconds);
+    setIsRunning(false);
+    setInputTime(formatTime(seconds));
   };
 
   const toggleTimer = () => {
@@ -124,21 +123,21 @@ const TimerTab = () => {
   ];
 
   return (
-    <div className="p-4 space-y-6">
-      <h2 className="text-2xl font-bold text-center">Rest Timer</h2>
+    <div className="p-4 space-y-6 bg-black min-h-full">
+      <h2 className="text-2xl font-bold text-center text-green-400">Rest Timer</h2>
       
       {/* Timer Display */}
-      <Card className="bg-slate-800 border-slate-700">
+      <Card className="bg-gray-900 border-green-800">
         <CardContent className="p-8">
           <div className="text-center">
-            <div className="text-6xl font-bold mb-4 text-blue-400">
+            <div className="text-6xl font-bold mb-4 text-green-400">
               {formatTime(time)}
             </div>
             
             {/* Progress bar */}
-            <div className="w-full bg-slate-700 rounded-full h-2 mb-6">
+            <div className="w-full bg-gray-700 rounded-full h-3 mb-6">
               <div 
-                className="bg-blue-500 h-2 rounded-full transition-all duration-1000"
+                className="bg-green-500 h-3 rounded-full transition-all duration-1000"
                 style={{ width: `${getProgressPercentage()}%` }}
               ></div>
             </div>
@@ -157,7 +156,7 @@ const TimerTab = () => {
                 onClick={resetTimer}
                 disabled={originalTime === 0}
                 variant="outline"
-                className="border-slate-600 px-6"
+                className="border-gray-600 text-gray-300 hover:bg-gray-800 px-6"
               >
                 <RotateCcw size={20} />
                 Reset
@@ -166,7 +165,7 @@ const TimerTab = () => {
               <Button
                 onClick={stopTimer}
                 variant="outline"
-                className="border-slate-600 px-6"
+                className="border-gray-600 text-gray-300 hover:bg-gray-800 px-6"
               >
                 <Square size={20} />
                 Stop
@@ -177,7 +176,7 @@ const TimerTab = () => {
       </Card>
 
       {/* Time Input Display */}
-      <Card className="bg-slate-800 border-slate-700">
+      <Card className="bg-gray-900 border-green-800">
         <CardContent className="p-4">
           <div className="text-center">
             <div className="text-3xl font-bold mb-4 text-green-400">
@@ -188,9 +187,9 @@ const TimerTab = () => {
       </Card>
 
       {/* Numpad */}
-      <Card className="bg-slate-800 border-slate-700">
+      <Card className="bg-gray-900 border-green-800">
         <CardHeader>
-          <CardTitle>Enter Time (MM:SS)</CardTitle>
+          <CardTitle className="text-green-400">Enter Time (MM:SS)</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-3 gap-3">
@@ -199,7 +198,7 @@ const TimerTab = () => {
                 key={button}
                 onClick={() => handleNumpadInput(button)}
                 variant="outline"
-                className="border-slate-600 hover:bg-blue-600 hover:border-blue-600 h-12 text-lg font-semibold"
+                className="border-gray-600 text-white hover:bg-green-600 hover:border-green-600 h-12 text-lg font-semibold"
               >
                 {button === 'clear' ? 'Clear' : 
                  button === 'delete' ? <Delete size={20} /> : 
@@ -210,41 +209,48 @@ const TimerTab = () => {
         </CardContent>
       </Card>
 
-      {/* Preset Times */}
-      <Card className="bg-slate-800 border-slate-700">
+      {/* Quick Presets */}
+      <Card className="bg-gray-900 border-green-800">
         <CardHeader>
-          <CardTitle>Quick Presets</CardTitle>
+          <CardTitle className="text-green-400">Quick Presets</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-4 gap-3">
             <Button
               onClick={() => setPresetTime(1)}
               variant="outline"
-              className="border-slate-600 hover:bg-blue-600 hover:border-blue-600"
+              className="border-gray-600 text-gray-300 hover:bg-green-600 hover:border-green-600"
             >
-              1 Min
+              1m
+            </Button>
+            <Button
+              onClick={() => setPresetTime(2)}
+              variant="outline"
+              className="border-gray-600 text-gray-300 hover:bg-green-600 hover:border-green-600"
+            >
+              2m
             </Button>
             <Button
               onClick={() => setPresetTime(3)}
               variant="outline"
-              className="border-slate-600 hover:bg-blue-600 hover:border-blue-600"
+              className="border-gray-600 text-gray-300 hover:bg-green-600 hover:border-green-600"
             >
-              3 Min
+              3m
             </Button>
             <Button
               onClick={() => setPresetTime(5)}
               variant="outline"
-              className="border-slate-600 hover:bg-blue-600 hover:border-blue-600"
+              className="border-gray-600 text-gray-300 hover:bg-green-600 hover:border-green-600"
             >
-              5 Min
+              5m
             </Button>
           </div>
         </CardContent>
       </Card>
 
       {isRunning && (
-        <div className="text-center text-green-400 font-semibold">
-          Timer is running...
+        <div className="text-center text-green-400 font-semibold animate-pulse">
+          Rest in progress... 💪
         </div>
       )}
     </div>
