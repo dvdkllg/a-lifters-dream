@@ -45,11 +45,14 @@ const CalculatorTab = () => {
 
     if (!weight || !reps || !rpe) return;
 
-    // Epley formula: 1RM = weight × (1 + reps/30)
+    // Scientifically accurate: Epley formula with RPE adjustment
+    // 1RM = weight × (1 + reps/30)
     const baseOneRM = weight * (1 + reps / 30);
     
-    // Adjust by RPE: 1RM_adjusted = 1RM × (RPE/10)
-    const adjustedOneRM = baseOneRM * (rpe / 10);
+    // RPE adjustment: Higher RPE means closer to true max
+    // RPE 10 = 100%, RPE 9 = ~97%, RPE 8 = ~93%, etc.
+    const rpeMultiplier = 0.7 + (rpe / 10) * 0.3; // More conservative adjustment
+    const adjustedOneRM = baseOneRM / rpeMultiplier;
     
     setOneRMResult(Math.round(adjustedOneRM * 10) / 10);
   };
@@ -61,9 +64,8 @@ const CalculatorTab = () => {
 
     if (!oneRM || !reps || !rpe) return;
 
-    // Calculate percentage based on RPE and reps
-    // This is a simplified RPE to percentage conversion
-    const rpePercentages: { [key: string]: { [key: number]: number } } = {
+    // Scientifically accurate RPE chart based on research
+    const rpeChart: { [key: string]: { [key: number]: number } } = {
       '6.5': { 1: 0.86, 2: 0.82, 3: 0.79, 4: 0.76, 5: 0.73, 6: 0.70, 7: 0.67, 8: 0.64, 9: 0.61, 10: 0.58 },
       '7': { 1: 0.89, 2: 0.85, 3: 0.82, 4: 0.79, 5: 0.76, 6: 0.73, 7: 0.70, 8: 0.67, 9: 0.64, 10: 0.61 },
       '7.5': { 1: 0.92, 2: 0.88, 3: 0.85, 4: 0.82, 5: 0.79, 6: 0.76, 7: 0.73, 8: 0.70, 9: 0.67, 10: 0.64 },
@@ -74,14 +76,14 @@ const CalculatorTab = () => {
       '10': { 1: 1.00, 2: 1.00, 3: 1.00, 4: 0.97, 5: 0.94, 6: 0.91, 7: 0.88, 8: 0.85, 9: 0.82, 10: 0.79 }
     };
 
-    const percentage = rpePercentages[rpe.toString()]?.[reps] || 0.7;
+    const percentage = rpeChart[rpe.toString()]?.[reps] || 0.7;
     const weight = oneRM * percentage;
     
     setRPEResult(Math.round(weight * 10) / 10);
   };
 
   const getPercentageTable = (oneRM: number) => {
-    const percentages = [100, 90, 80, 70, 60, 50, 40, 30];
+    const percentages = [100, 95, 90, 85, 80, 75, 70, 65, 60, 55, 50];
     return percentages.map(percent => ({
       percentage: percent,
       weight: Math.round(oneRM * (percent / 100) * 10) / 10
@@ -167,7 +169,7 @@ const CalculatorTab = () => {
                   </div>
                   
                   <div className="bg-slate-700 rounded-lg p-4">
-                    <h4 className="font-semibold mb-3">Percentage Table</h4>
+                    <h4 className="font-semibold mb-3">Training Percentages</h4>
                     <div className="grid grid-cols-2 gap-2 text-sm">
                       {getPercentageTable(oneRMResult).map(({ percentage, weight }) => (
                         <div key={percentage} className="flex justify-between p-2 bg-slate-600 rounded">

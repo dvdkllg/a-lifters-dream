@@ -1,15 +1,14 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Play, Pause, Square, RotateCcw } from 'lucide-react';
+import { Play, Pause, Square, RotateCcw, Delete } from 'lucide-react';
 
 const TimerTab = () => {
   const [time, setTime] = useState(0); // time in seconds
+  const [originalTime, setOriginalTime] = useState(0); // for progress calculation
   const [isRunning, setIsRunning] = useState(false);
-  const [customMinutes, setCustomMinutes] = useState('');
-  const [customSeconds, setCustomSeconds] = useState('');
+  const [inputTime, setInputTime] = useState('00:00');
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -46,21 +45,52 @@ const TimerTab = () => {
   };
 
   const setPresetTime = (minutes: number) => {
-    setTime(minutes * 60);
+    const seconds = minutes * 60;
+    setTime(seconds);
+    setOriginalTime(seconds);
     setIsRunning(false);
+    setInputTime(formatTime(seconds));
   };
 
-  const setCustomTime = () => {
-    const mins = parseInt(customMinutes) || 0;
-    const secs = parseInt(customSeconds) || 0;
-    const totalSeconds = (mins * 60) + secs;
-    
-    if (totalSeconds > 0) {
-      setTime(totalSeconds);
-      setIsRunning(false);
-      setCustomMinutes('');
-      setCustomSeconds('');
+  const handleNumpadInput = (digit: string) => {
+    if (digit === 'clear') {
+      setInputTime('00:00');
+      setTime(0);
+      setOriginalTime(0);
+      return;
     }
+
+    if (digit === 'delete') {
+      const cleanTime = inputTime.replace(':', '');
+      const newTime = cleanTime.slice(0, -1).padStart(4, '0');
+      const formatted = `${newTime.slice(0, 2)}:${newTime.slice(2)}`;
+      setInputTime(formatted);
+      
+      const mins = parseInt(newTime.slice(0, 2));
+      const secs = parseInt(newTime.slice(2));
+      const totalSeconds = (mins * 60) + secs;
+      setTime(totalSeconds);
+      setOriginalTime(totalSeconds);
+      return;
+    }
+
+    // Handle digit input
+    const cleanTime = inputTime.replace(':', '');
+    if (cleanTime.length >= 4) return; // Max 99:59
+    
+    const newTime = (cleanTime + digit).padStart(4, '0');
+    const formatted = `${newTime.slice(0, 2)}:${newTime.slice(2)}`;
+    
+    // Validate seconds (max 59)
+    const secs = parseInt(newTime.slice(2));
+    if (secs > 59) return;
+    
+    setInputTime(formatted);
+    
+    const mins = parseInt(newTime.slice(0, 2));
+    const totalSeconds = (mins * 60) + secs;
+    setTime(totalSeconds);
+    setOriginalTime(totalSeconds);
   };
 
   const toggleTimer = () => {
@@ -71,14 +101,27 @@ const TimerTab = () => {
 
   const resetTimer = () => {
     setIsRunning(false);
+    setTime(originalTime);
+  };
+
+  const stopTimer = () => {
+    setIsRunning(false);
     setTime(0);
+    setOriginalTime(0);
+    setInputTime('00:00');
   };
 
   const getProgressPercentage = () => {
-    if (time === 0) return 0;
-    // This would need to track the original time to show progress
-    return 0;
+    if (originalTime === 0) return 0;
+    return ((originalTime - time) / originalTime) * 100;
   };
+
+  const numpadButtons = [
+    ['1', '2', '3'],
+    ['4', '5', '6'],
+    ['7', '8', '9'],
+    ['clear', '0', 'delete']
+  ];
 
   return (
     <div className="p-4 space-y-6">
@@ -92,7 +135,7 @@ const TimerTab = () => {
               {formatTime(time)}
             </div>
             
-            {/* Progress circle could go here */}
+            {/* Progress bar */}
             <div className="w-full bg-slate-700 rounded-full h-2 mb-6">
               <div 
                 className="bg-blue-500 h-2 rounded-full transition-all duration-1000"
@@ -112,13 +155,57 @@ const TimerTab = () => {
               
               <Button
                 onClick={resetTimer}
+                disabled={originalTime === 0}
                 variant="outline"
                 className="border-slate-600 px-6"
               >
                 <RotateCcw size={20} />
                 Reset
               </Button>
+
+              <Button
+                onClick={stopTimer}
+                variant="outline"
+                className="border-slate-600 px-6"
+              >
+                <Square size={20} />
+                Stop
+              </Button>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Time Input Display */}
+      <Card className="bg-slate-800 border-slate-700">
+        <CardContent className="p-4">
+          <div className="text-center">
+            <div className="text-3xl font-bold mb-4 text-green-400">
+              Set Time: {inputTime}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Numpad */}
+      <Card className="bg-slate-800 border-slate-700">
+        <CardHeader>
+          <CardTitle>Enter Time (MM:SS)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-3 gap-3">
+            {numpadButtons.flat().map((button) => (
+              <Button
+                key={button}
+                onClick={() => handleNumpadInput(button)}
+                variant="outline"
+                className="border-slate-600 hover:bg-blue-600 hover:border-blue-600 h-12 text-lg font-semibold"
+              >
+                {button === 'clear' ? 'Clear' : 
+                 button === 'delete' ? <Delete size={20} /> : 
+                 button}
+              </Button>
+            ))}
           </div>
         </CardContent>
       </Card>
@@ -150,47 +237,6 @@ const TimerTab = () => {
               className="border-slate-600 hover:bg-blue-600 hover:border-blue-600"
             >
               5 Min
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Custom Time */}
-      <Card className="bg-slate-800 border-slate-700">
-        <CardHeader>
-          <CardTitle>Custom Time</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-3 items-end">
-            <div className="flex-1">
-              <label className="block text-sm font-medium mb-1">Minutes</label>
-              <Input
-                type="number"
-                min="0"
-                max="59"
-                value={customMinutes}
-                onChange={(e) => setCustomMinutes(e.target.value)}
-                className="bg-slate-700 border-slate-600"
-                placeholder="0"
-              />
-            </div>
-            <div className="flex-1">
-              <label className="block text-sm font-medium mb-1">Seconds</label>
-              <Input
-                type="number"
-                min="0"
-                max="59"
-                value={customSeconds}
-                onChange={(e) => setCustomSeconds(e.target.value)}
-                className="bg-slate-700 border-slate-600"
-                placeholder="0"
-              />
-            </div>
-            <Button
-              onClick={setCustomTime}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              Set
             </Button>
           </div>
         </CardContent>
