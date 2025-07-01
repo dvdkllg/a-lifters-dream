@@ -51,7 +51,7 @@ const Index = () => {
                 : "text-slate-400 hover:text-white"
             )}
           >
-            <Supplements size={20} />
+            <Pill size={20} />
             <span className="text-xs mt-1">Supplements</span>
           </button>
           
