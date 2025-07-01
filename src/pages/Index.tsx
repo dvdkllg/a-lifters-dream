@@ -60,6 +60,21 @@ const Index = () => {
     }
   };
 
+  const getAccentColor = () => {
+    switch (activeTab) {
+      case 'supplements':
+        return 'bg-purple-400';
+      case 'calculator':
+        return 'bg-blue-400';
+      case 'timer':
+        return 'bg-green-400';
+      case 'platecalculator':
+        return 'bg-orange-400';
+      default:
+        return 'bg-purple-400';
+    }
+  };
+
   return (
     <SettingsContext.Provider value={{ isDarkMode, isKg, setIsDarkMode, setIsKg }}>
       <div className={cn(
@@ -68,12 +83,14 @@ const Index = () => {
       )}>
         {/* Header */}
         <div className={cn(
-          "p-4 shadow-lg border-b border-purple-900 relative",
+          "p-4 shadow-lg relative",
           isDarkMode ? "bg-gray-900" : "bg-gray-100"
         )}>
           <h1 className={cn("text-xl font-bold text-center", getTitleColor())}>
             A Lifter's Dream
           </h1>
+          {/* Colored line below title */}
+          <div className={cn("h-0.5 w-full mt-2", getAccentColor())}></div>
           <button
             onClick={() => setShowSettings(true)}
             className="absolute top-4 right-4 p-2 rounded-lg hover:bg-gray-800 transition-colors"
@@ -87,9 +104,12 @@ const Index = () => {
           {renderActiveTab()}
         </div>
 
+        {/* Colored line above navigation */}
+        <div className={cn("h-0.5 w-full", getAccentColor())}></div>
+
         {/* Fixed Bottom Navigation */}
         <div className={cn(
-          "fixed bottom-0 left-0 right-0 border-t border-purple-900",
+          "fixed bottom-0 left-0 right-0",
           isDarkMode ? "bg-gray-900" : "bg-gray-100"
         )}>
           <div className="flex justify-around py-2">

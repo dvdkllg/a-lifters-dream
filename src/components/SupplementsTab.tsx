@@ -1,3 +1,4 @@
+
 import React, { useState, useContext } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -100,37 +101,52 @@ const SupplementsTab = () => {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <Label htmlFor="name" className="text-gray-300">Supplement Name</Label>
+                <Label htmlFor="name" className={cn(isDarkMode ? "text-gray-300" : "text-gray-700")}>
+                  Supplement Name
+                </Label>
                 <Input
                   id="name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="bg-gray-800 border-gray-700 text-white"
+                  className={cn(
+                    "border-gray-700",
+                    isDarkMode ? "bg-gray-800 text-white" : "bg-white text-black"
+                  )}
                   required
                 />
               </div>
               
               <div>
-                <Label htmlFor="pills" className="text-gray-300">Pills per Dose</Label>
+                <Label htmlFor="pills" className={cn(isDarkMode ? "text-gray-300" : "text-gray-700")}>
+                  Pills per Dose
+                </Label>
                 <Input
                   id="pills"
                   type="number"
                   min="1"
                   value={formData.pillsPerDose}
                   onChange={(e) => setFormData({ ...formData, pillsPerDose: parseInt(e.target.value) })}
-                  className="bg-gray-800 border-gray-700 text-white"
+                  className={cn(
+                    "border-gray-700",
+                    isDarkMode ? "bg-gray-800 text-white" : "bg-white text-black"
+                  )}
                 />
               </div>
               
               <div>
-                <Label className="text-gray-300">Schedule Times</Label>
+                <Label className={cn(isDarkMode ? "text-gray-300" : "text-gray-700")}>
+                  Schedule Times
+                </Label>
                 {formData.scheduleTimes.map((time, index) => (
                   <div key={index} className="flex gap-2 mt-2">
                     <Input
                       type="time"
                       value={time}
                       onChange={(e) => updateTimeSlot(index, e.target.value)}
-                      className="bg-gray-800 border-gray-700 text-white"
+                      className={cn(
+                        "border-gray-700",
+                        isDarkMode ? "bg-gray-800 text-white" : "bg-white text-black"
+                      )}
                     />
                     {formData.scheduleTimes.length > 1 && (
                       <Button
@@ -138,7 +154,7 @@ const SupplementsTab = () => {
                         variant="outline"
                         size="sm"
                         onClick={() => removeTimeSlot(index)}
-                        className="border-gray-600 text-gray-300 hover:bg-gray-800"
+                        className="border-purple-600 text-purple-400 hover:bg-purple-600 hover:text-white"
                       >
                         <Trash2 size={16} />
                       </Button>
@@ -150,7 +166,7 @@ const SupplementsTab = () => {
                   variant="outline"
                   size="sm"
                   onClick={addTimeSlot}
-                  className="mt-2 border-gray-600 text-gray-300 hover:bg-gray-800"
+                  className="mt-2 border-purple-600 text-purple-400 hover:bg-purple-600 hover:text-white"
                 >
                   Add Time
                 </Button>
@@ -189,12 +205,22 @@ const SupplementsTab = () => {
                   )}>
                     💊 {supplement.name}
                   </h3>
-                  <p className="text-gray-300">{supplement.pillsPerDose} pill(s) per dose</p>
+                  <p className={cn(isDarkMode ? "text-gray-300" : "text-gray-600")}>
+                    {supplement.pillsPerDose} pill(s) per dose
+                  </p>
                   <div className="flex items-center gap-2 mt-2">
                     <Clock size={16} className="text-purple-400" />
-                    <span className="text-sm text-gray-300">Next dose: {getNextDose(supplement.scheduleTimes)}</span>
+                    <span className={cn(
+                      "text-sm",
+                      isDarkMode ? "text-gray-300" : "text-gray-600"
+                    )}>
+                      Next dose: {getNextDose(supplement.scheduleTimes)}
+                    </span>
                   </div>
-                  <div className="text-xs text-gray-400 mt-1">
+                  <div className={cn(
+                    "text-xs mt-1",
+                    isDarkMode ? "text-gray-400" : "text-gray-500"
+                  )}>
                     Times: {supplement.scheduleTimes.join(', ')}
                   </div>
                 </div>
@@ -213,7 +239,10 @@ const SupplementsTab = () => {
       </div>
 
       {supplements.length === 0 && !showForm && (
-        <div className="text-center py-8 text-gray-400">
+        <div className={cn(
+          "text-center py-8",
+          isDarkMode ? "text-gray-400" : "text-gray-500"
+        )}>
           <p>No supplements added yet.</p>
           <p className="text-sm">Tap "Add Supplement" to get started.</p>
         </div>
