@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, Clock, Trash2 } from 'lucide-react';
 import { SettingsContext } from '@/pages/Index';
+import { cn } from '@/lib/utils';
 
 interface Supplement {
   id: string;

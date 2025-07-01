@@ -1,9 +1,9 @@
-
 import React, { useState, useEffect, useRef, useContext } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Play, Pause, Square, RotateCcw, Delete } from 'lucide-react';
 import { SettingsContext } from '@/pages/Index';
+import { cn } from '@/lib/utils';
 
 const TimerTab = () => {
   const { isDarkMode } = useContext(SettingsContext);
