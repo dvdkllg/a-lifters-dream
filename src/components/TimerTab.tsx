@@ -1,10 +1,12 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Play, Pause, Square, RotateCcw, Delete } from 'lucide-react';
+import { SettingsContext } from '@/pages/Index';
 
 const TimerTab = () => {
+  const { isDarkMode } = useContext(SettingsContext);
   const [time, setTime] = useState(0);
   const [originalTime, setOriginalTime] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
@@ -123,11 +125,47 @@ const TimerTab = () => {
   ];
 
   return (
-    <div className="p-4 space-y-6 bg-black min-h-full">
-      <h2 className="text-2xl font-bold text-center text-green-400">Rest Timer</h2>
+    <div className={cn(
+      "p-4 space-y-6 min-h-full",
+      isDarkMode ? "bg-black" : "bg-white"
+    )}>
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold text-green-400">Rest Timer</h2>
+        
+        {/* Quick Presets - Top Right */}
+        <div className="flex flex-col gap-2">
+          <Button
+            onClick={() => setPresetTime(1)}
+            variant="outline"
+            size="sm"
+            className="border-green-600 text-green-400 hover:bg-green-600 hover:text-white"
+          >
+            1m
+          </Button>
+          <Button
+            onClick={() => setPresetTime(3)}
+            variant="outline"
+            size="sm"
+            className="border-green-600 text-green-400 hover:bg-green-600 hover:text-white"
+          >
+            3m
+          </Button>
+          <Button
+            onClick={() => setPresetTime(5)}
+            variant="outline"
+            size="sm"
+            className="border-green-600 text-green-400 hover:bg-green-600 hover:text-white"
+          >
+            5m
+          </Button>
+        </div>
+      </div>
       
       {/* Timer Display */}
-      <Card className="bg-gray-900 border-green-800">
+      <Card className={cn(
+        "border-green-800",
+        isDarkMode ? "bg-gray-900" : "bg-gray-100"
+      )}>
         <CardContent className="p-8">
           <div className="text-center">
             <div className="text-6xl font-bold mb-4 text-green-400">
@@ -135,7 +173,10 @@ const TimerTab = () => {
             </div>
             
             {/* Progress bar */}
-            <div className="w-full bg-gray-700 rounded-full h-3 mb-6">
+            <div className={cn(
+              "w-full rounded-full h-3 mb-6",
+              isDarkMode ? "bg-gray-700" : "bg-gray-300"
+            )}>
               <div 
                 className="bg-green-500 h-3 rounded-full transition-all duration-1000"
                 style={{ width: `${getProgressPercentage()}%` }}
@@ -156,7 +197,7 @@ const TimerTab = () => {
                 onClick={resetTimer}
                 disabled={originalTime === 0}
                 variant="outline"
-                className="border-gray-600 text-gray-300 hover:bg-gray-800 px-6"
+                className="border-green-600 text-green-400 hover:bg-green-600 hover:text-white px-6"
               >
                 <RotateCcw size={20} />
                 Reset
@@ -165,7 +206,7 @@ const TimerTab = () => {
               <Button
                 onClick={stopTimer}
                 variant="outline"
-                className="border-gray-600 text-gray-300 hover:bg-gray-800 px-6"
+                className="border-green-600 text-green-400 hover:bg-green-600 hover:text-white px-6"
               >
                 <Square size={20} />
                 Stop
@@ -176,18 +217,24 @@ const TimerTab = () => {
       </Card>
 
       {/* Time Input Display */}
-      <Card className="bg-gray-900 border-green-800">
+      <Card className={cn(
+        "border-green-800",
+        isDarkMode ? "bg-gray-900" : "bg-gray-100"
+      )}>
         <CardContent className="p-4">
           <div className="text-center">
             <div className="text-3xl font-bold mb-4 text-green-400">
-              Set Time: {inputTime}
+              {inputTime}
             </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Numpad */}
-      <Card className="bg-gray-900 border-green-800">
+      <Card className={cn(
+        "border-green-800",
+        isDarkMode ? "bg-gray-900" : "bg-gray-100"
+      )}>
         <CardHeader>
           <CardTitle className="text-green-400">Enter Time (MM:SS)</CardTitle>
         </CardHeader>
@@ -198,52 +245,13 @@ const TimerTab = () => {
                 key={button}
                 onClick={() => handleNumpadInput(button)}
                 variant="outline"
-                className="border-gray-600 text-white hover:bg-green-600 hover:border-green-600 h-12 text-lg font-semibold"
+                className="border-green-600 text-green-400 hover:bg-green-600 hover:text-white h-12 text-lg font-semibold"
               >
                 {button === 'clear' ? 'Clear' : 
                  button === 'delete' ? <Delete size={20} /> : 
                  button}
               </Button>
             ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Quick Presets */}
-      <Card className="bg-gray-900 border-green-800">
-        <CardHeader>
-          <CardTitle className="text-green-400">Quick Presets</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-4 gap-3">
-            <Button
-              onClick={() => setPresetTime(1)}
-              variant="outline"
-              className="border-gray-600 text-gray-300 hover:bg-green-600 hover:border-green-600"
-            >
-              1m
-            </Button>
-            <Button
-              onClick={() => setPresetTime(2)}
-              variant="outline"
-              className="border-gray-600 text-gray-300 hover:bg-green-600 hover:border-green-600"
-            >
-              2m
-            </Button>
-            <Button
-              onClick={() => setPresetTime(3)}
-              variant="outline"
-              className="border-gray-600 text-gray-300 hover:bg-green-600 hover:border-green-600"
-            >
-              3m
-            </Button>
-            <Button
-              onClick={() => setPresetTime(5)}
-              variant="outline"
-              className="border-gray-600 text-gray-300 hover:bg-green-600 hover:border-green-600"
-            >
-              5m
-            </Button>
           </div>
         </CardContent>
       </Card>

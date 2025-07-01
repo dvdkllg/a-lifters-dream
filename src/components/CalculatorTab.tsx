@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+
+import React, { useState, useContext } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { SettingsContext } from '@/pages/Index';
 
 interface OneRMResult {
   formula: string;
@@ -11,6 +13,7 @@ interface OneRMResult {
 }
 
 const CalculatorTab = () => {
+  const { isDarkMode, isKg } = useContext(SettingsContext);
   const [weight, setWeight] = useState('');
   const [reps, setReps] = useState('');
   const [rpe, setRpe] = useState('');
@@ -18,6 +21,8 @@ const CalculatorTab = () => {
   const [percentageWeight, setPercentageWeight] = useState('');
   const [percentage, setPercentage] = useState('');
   const [percentageResult, setPercentageResult] = useState('');
+
+  const weightUnit = isKg ? 'kg' : 'lbs';
 
   const calculateOneRM = () => {
     const w = parseFloat(weight);
@@ -56,7 +61,7 @@ const CalculatorTab = () => {
     // Calculate 1RM using Epley formula
     const oneRM = w * (1 + r / 30);
     
-    // RPE to percentage mapping (approximate)
+    // RPE to percentage mapping
     const rpePercentages: { [key: number]: number } = {
       10: 100, 9.5: 97, 9: 93, 8.5: 90, 8: 87, 
       7.5: 83, 7: 80, 6.5: 77, 6: 73, 5.5: 70, 5: 67
@@ -65,7 +70,7 @@ const CalculatorTab = () => {
     const percentage = rpePercentages[targetRPE] || 70;
     const recommendedWeight = (oneRM * percentage) / 100;
     
-    setPercentageResult(`${Math.round(recommendedWeight * 10) / 10} lbs (${percentage}% of 1RM)`);
+    setPercentageResult(`${Math.round(recommendedWeight * 10) / 10} ${weightUnit} (${percentage}% of 1RM)`);
   };
 
   const calculatePercentage = () => {
@@ -75,39 +80,55 @@ const CalculatorTab = () => {
     if (!w || !p) return;
     
     const result = (w * p) / 100;
-    setPercentageResult(`${Math.round(result * 10) / 10} lbs`);
+    setPercentageResult(`${Math.round(result * 10) / 10} ${weightUnit}`);
   };
 
   return (
-    <div className="p-4 space-y-6 bg-black min-h-full">
+    <div className={cn(
+      "p-4 space-y-6 min-h-full",
+      isDarkMode ? "bg-black" : "bg-white"
+    )}>
       <h2 className="text-2xl font-bold text-center text-blue-400">Calculators</h2>
       
       {/* 1RM Calculator */}
-      <Card className="bg-gray-900 border-blue-800">
+      <Card className={cn(
+        "border-blue-800",
+        isDarkMode ? "bg-gray-900" : "bg-gray-100"
+      )}>
         <CardHeader>
           <CardTitle className="text-blue-400">1RM Calculator</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="weight" className="text-gray-300">Weight (lbs)</Label>
+              <Label htmlFor="weight" className={cn(isDarkMode ? "text-gray-300" : "text-gray-700")}>
+                Weight ({weightUnit})
+              </Label>
               <Input
                 id="weight"
                 type="number"
                 value={weight}
                 onChange={(e) => setWeight(e.target.value)}
-                className="bg-gray-800 border-gray-700 text-white"
+                className={cn(
+                  "border-gray-700",
+                  isDarkMode ? "bg-gray-800 text-white" : "bg-white text-black"
+                )}
                 placeholder="225"
               />
             </div>
             <div>
-              <Label htmlFor="reps" className="text-gray-300">Reps</Label>
+              <Label htmlFor="reps" className={cn(isDarkMode ? "text-gray-300" : "text-gray-700")}>
+                Reps
+              </Label>
               <Input
                 id="reps"
                 type="number"
                 value={reps}
                 onChange={(e) => setReps(e.target.value)}
-                className="bg-gray-800 border-gray-700 text-white"
+                className={cn(
+                  "border-gray-700",
+                  isDarkMode ? "bg-gray-800 text-white" : "bg-white text-black"
+                )}
                 placeholder="5"
               />
             </div>
@@ -124,9 +145,19 @@ const CalculatorTab = () => {
             <div className="space-y-2">
               <h4 className="font-semibold text-blue-400">Results:</h4>
               {oneRMResults.map((result, index) => (
-                <div key={index} className="flex justify-between bg-gray-800 p-2 rounded">
-                  <span className="text-gray-300">{result.formula}:</span>
-                  <span className="text-white font-bold">{result.result} lbs</span>
+                <div key={index} className={cn(
+                  "flex justify-between p-2 rounded",
+                  isDarkMode ? "bg-gray-800" : "bg-gray-200"
+                )}>
+                  <span className={cn(isDarkMode ? "text-gray-300" : "text-gray-700")}>
+                    {result.formula}:
+                  </span>
+                  <span className={cn(
+                    "font-bold",
+                    isDarkMode ? "text-white" : "text-black"
+                  )}>
+                    {result.result} {weightUnit}
+                  </span>
                 </div>
               ))}
             </div>
@@ -135,43 +166,71 @@ const CalculatorTab = () => {
       </Card>
 
       {/* RPE Calculator */}
-      <Card className="bg-gray-900 border-blue-800">
+      <Card className={cn(
+        "border-blue-800",
+        isDarkMode ? "bg-gray-900" : "bg-gray-100"
+      )}>
         <CardHeader>
           <CardTitle className="text-blue-400">RPE Weight Calculator</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <Label htmlFor="rpeWeight" className="text-gray-300">Known Weight</Label>
+              <Label htmlFor="rpeWeight" className={cn(isDarkMode ? "text-gray-300" : "text-gray-700")}>
+                Known Weight ({weightUnit})
+              </Label>
               <Input
                 id="rpeWeight"
                 type="number"
                 value={weight}
                 onChange={(e) => setWeight(e.target.value)}
-                className="bg-gray-800 border-gray-700 text-white"
+                className={cn(
+                  "border-gray-700",
+                  isDarkMode ? "bg-gray-800 text-white" : "bg-white text-black"
+                )}
                 placeholder="225"
               />
             </div>
             <div>
-              <Label htmlFor="rpeReps" className="text-gray-300">Known Reps</Label>
+              <Label htmlFor="rpeReps" className={cn(isDarkMode ? "text-gray-300" : "text-gray-700")}>
+                Known Reps
+              </Label>
               <Input
                 id="rpeReps"
                 type="number"
                 value={reps}
                 onChange={(e) => setReps(e.target.value)}
-                className="bg-gray-800 border-gray-700 text-white"
+                className={cn(
+                  "border-gray-700",
+                  isDarkMode ? "bg-gray-800 text-white" : "bg-white text-black"
+                )}
                 placeholder="5"
               />
             </div>
             <div>
-              <Label htmlFor="targetRpe" className="text-gray-300">Target RPE</Label>
+              <Label htmlFor="targetRpe" className={cn(isDarkMode ? "text-gray-300" : "text-gray-700")}>
+                Target RPE
+              </Label>
               <Select value={rpe} onValueChange={setRpe}>
-                <SelectTrigger className="bg-gray-800 border-gray-700 text-white">
+                <SelectTrigger className={cn(
+                  "border-gray-700",
+                  isDarkMode ? "bg-gray-800 text-white" : "bg-white text-black"
+                )}>
                   <SelectValue placeholder="RPE" />
                 </SelectTrigger>
-                <SelectContent className="bg-gray-800 border-gray-700">
+                <SelectContent className={cn(
+                  "border-gray-700",
+                  isDarkMode ? "bg-gray-800" : "bg-white"
+                )}>
                   {[10, 9.5, 9, 8.5, 8, 7.5, 7, 6.5, 6, 5.5, 5].map(rpeValue => (
-                    <SelectItem key={rpeValue} value={rpeValue.toString()} className="text-white hover:bg-gray-700">
+                    <SelectItem 
+                      key={rpeValue} 
+                      value={rpeValue.toString()} 
+                      className={cn(
+                        "hover:bg-gray-700",
+                        isDarkMode ? "text-white" : "text-black"
+                      )}
+                    >
                       RPE {rpeValue}
                     </SelectItem>
                   ))}
@@ -188,40 +247,58 @@ const CalculatorTab = () => {
           </Button>
           
           {percentageResult && (
-            <div className="bg-gray-800 p-3 rounded">
+            <div className={cn(
+              "p-3 rounded",
+              isDarkMode ? "bg-gray-800" : "bg-gray-200"
+            )}>
               <span className="text-blue-400 font-semibold">Recommended Weight: </span>
-              <span className="text-white">{percentageResult}</span>
+              <span className={cn(isDarkMode ? "text-white" : "text-black")}>
+                {percentageResult}
+              </span>
             </div>
           )}
         </CardContent>
       </Card>
 
       {/* Percentage Calculator */}
-      <Card className="bg-gray-900 border-blue-800">
+      <Card className={cn(
+        "border-blue-800",
+        isDarkMode ? "bg-gray-900" : "bg-gray-100"
+      )}>
         <CardHeader>
           <CardTitle className="text-blue-400">Percentage Calculator</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="percentageWeight" className="text-gray-300">Weight (lbs)</Label>
+              <Label htmlFor="percentageWeight" className={cn(isDarkMode ? "text-gray-300" : "text-gray-700")}>
+                Weight ({weightUnit})
+              </Label>
               <Input
                 id="percentageWeight"
                 type="number"
                 value={percentageWeight}
                 onChange={(e) => setPercentageWeight(e.target.value)}
-                className="bg-gray-800 border-gray-700 text-white"
+                className={cn(
+                  "border-gray-700",
+                  isDarkMode ? "bg-gray-800 text-white" : "bg-white text-black"
+                )}
                 placeholder="300"
               />
             </div>
             <div>
-              <Label htmlFor="percentage" className="text-gray-300">Percentage (%)</Label>
+              <Label htmlFor="percentage" className={cn(isDarkMode ? "text-gray-300" : "text-gray-700")}>
+                Percentage (%)
+              </Label>
               <Input
                 id="percentage"
                 type="number"
                 value={percentage}
                 onChange={(e) => setPercentage(e.target.value)}
-                className="bg-gray-800 border-gray-700 text-white"
+                className={cn(
+                  "border-gray-700",
+                  isDarkMode ? "bg-gray-800 text-white" : "bg-white text-black"
+                )}
                 placeholder="85"
               />
             </div>
@@ -235,9 +312,17 @@ const CalculatorTab = () => {
           </Button>
           
           {percentageResult && (
-            <div className="bg-gray-800 p-3 rounded">
+            <div className={cn(
+              "p-3 rounded",
+              isDarkMode ? "bg-gray-800" : "bg-gray-200"
+            )}>
               <span className="text-blue-400 font-semibold">Result: </span>
-              <span className="text-white font-bold">{percentageResult}</span>
+              <span className={cn(
+                "font-bold",
+                isDarkMode ? "text-white" : "text-black"
+              )}>
+                {percentageResult}
+              </span>
             </div>
           )}
         </CardContent>

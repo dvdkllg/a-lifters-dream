@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, Clock, Trash2 } from 'lucide-react';
+import { SettingsContext } from '@/pages/Index';
 
 interface Supplement {
   id: string;
@@ -13,6 +14,7 @@ interface Supplement {
 }
 
 const SupplementsTab = () => {
+  const { isDarkMode } = useContext(SettingsContext);
   const [supplements, setSupplements] = useState<Supplement[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
@@ -74,7 +76,10 @@ const SupplementsTab = () => {
   };
 
   return (
-    <div className="p-4 space-y-4 bg-black min-h-full">
+    <div className={cn(
+      "p-4 space-y-4 min-h-full",
+      isDarkMode ? "bg-black" : "bg-white"
+    )}>
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-purple-400">Supplements</h2>
         <Button onClick={() => setShowForm(!showForm)} className="bg-purple-600 hover:bg-purple-700">
@@ -84,7 +89,10 @@ const SupplementsTab = () => {
       </div>
 
       {showForm && (
-        <Card className="bg-gray-900 border-purple-800">
+        <Card className={cn(
+          "border-purple-800",
+          isDarkMode ? "bg-gray-900" : "bg-gray-100"
+        )}>
           <CardHeader>
             <CardTitle className="text-purple-400">Add New Supplement</CardTitle>
           </CardHeader>
@@ -148,14 +156,14 @@ const SupplementsTab = () => {
               </div>
               
               <div className="flex gap-2">
-                <Button type="submit" className="bg-green-600 hover:bg-green-700">
+                <Button type="submit" className="bg-purple-600 hover:bg-purple-700">
                   Save Supplement
                 </Button>
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => setShowForm(false)}
-                  className="border-gray-600 text-gray-300 hover:bg-gray-800"
+                  className="border-purple-600 text-purple-400 hover:bg-purple-600 hover:text-white"
                 >
                   Cancel
                 </Button>
@@ -167,11 +175,17 @@ const SupplementsTab = () => {
 
       <div className="space-y-3">
         {supplements.map((supplement) => (
-          <Card key={supplement.id} className="bg-gray-900 border-purple-800">
+          <Card key={supplement.id} className={cn(
+            "border-purple-800",
+            isDarkMode ? "bg-gray-900" : "bg-gray-100"
+          )}>
             <CardContent className="p-4">
               <div className="flex justify-between items-start">
                 <div className="flex-1">
-                  <h3 className="font-semibold text-lg text-white flex items-center gap-2">
+                  <h3 className={cn(
+                    "font-semibold text-lg flex items-center gap-2",
+                    isDarkMode ? "text-white" : "text-black"
+                  )}>
                     💊 {supplement.name}
                   </h3>
                   <p className="text-gray-300">{supplement.pillsPerDose} pill(s) per dose</p>
