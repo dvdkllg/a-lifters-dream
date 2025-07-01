@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
-import { Supplements, Calculator, Timer, Dumbbell } from 'lucide-react';
+import { Pill, Calculator, Timer, Dumbbell } from 'lucide-react';
 import SupplementsTab from '@/components/SupplementsTab';
 import CalculatorTab from '@/components/CalculatorTab';
 import TimerTab from '@/components/TimerTab';
