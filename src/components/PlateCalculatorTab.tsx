@@ -25,25 +25,18 @@ interface PlateCalculation {
 const PlateCalculatorTab = () => {
   const { isDarkMode, isKg } = useContext(SettingsContext);
   const [targetWeight, setTargetWeight] = useState('');
-  const [barWeight, setBarWeight] = useState(isKg ? 20 : 45);
+  const [barWeight, setBarWeight] = useState(20); // Default to kg
   const [plates, setPlates] = useState<PlateCalculation[]>([]);
   const [isReverse, setIsReverse] = useState(false);
   const [loadedPlates, setLoadedPlates] = useState<{ [key: number]: number }>({});
   const [reverseResult, setReverseResult] = useState('');
   const [availablePlates, setAvailablePlates] = useState<PlateInfo[]>(
-    isKg 
-      ? [25, 20, 15, 10, 5, 2.5, 1.25].map(weight => ({
-          weight,
-          count: 0,
-          available: 10,
-          color: getPlateColor(weight, true)
-        }))
-      : [55, 45, 35, 25, 10, 5, 2.5].map(weight => ({
-          weight,
-          count: 0,
-          available: 10,
-          color: getPlateColor(weight, false)
-        }))
+    [25, 20, 15, 10, 5, 2.5, 1.25].map(weight => ({
+      weight,
+      count: 0,
+      available: 10,
+      color: getPlateColor(weight, true)
+    }))
   );
   const [showPlateManager, setShowPlateManager] = useState(false);
   const [showCustomBar, setShowCustomBar] = useState(false);
@@ -148,7 +141,7 @@ const PlateCalculatorTab = () => {
 
   const calculateReverse = () => {
     const totalPlateWeight = Object.entries(loadedPlates).reduce((sum, [weight, count]) => {
-      return sum + (parseFloat(weight) * count);
+      return sum + (parseFloat(weight) * Number(count));
     }, 0);
     const total = barWeight + (totalPlateWeight * 2);
     setReverseResult(`${total} ${weightUnit}`);
@@ -183,7 +176,7 @@ const PlateCalculatorTab = () => {
       
       // Calculate new total immediately
       const totalPlateWeight = Object.entries(newPlates).reduce((sum, [weight, count]) => {
-        return sum + (parseFloat(weight) * count);
+        return sum + (parseFloat(weight) * Number(count));
       }, 0);
       const total = barWeight + (totalPlateWeight * 2);
       setReverseResult(`${total} ${weightUnit}`);
@@ -208,7 +201,7 @@ const PlateCalculatorTab = () => {
       
       // Calculate new total immediately
       const totalPlateWeight = Object.entries(newPlates).reduce((sum, [weight, count]) => {
-        return sum + (parseFloat(weight) * count);
+        return sum + (parseFloat(weight) * Number(count));
       }, 0);
       const total = barWeight + (totalPlateWeight * 2);
       setReverseResult(`${total} ${weightUnit}`);
@@ -231,10 +224,10 @@ const PlateCalculatorTab = () => {
     const sortedPlates = [...plateList].sort((a, b) => b.plate - a.plate);
     
     const getPlateWidth = (weight: number) => {
-      if (weight >= 20 || weight >= 45) return 'w-5';
-      if (weight >= 10 || weight >= 25) return 'w-4';
-      if (weight >= 5 || weight >= 10) return 'w-3';
-      return 'w-2';
+      if (weight >= 20 || weight >= 45) return 'w-4';
+      if (weight >= 10 || weight >= 25) return 'w-3';
+      if (weight >= 5 || weight >= 10) return 'w-2';
+      return 'w-1.5';
     };
 
     const getPlateHeight = (weight: number) => {
@@ -248,19 +241,19 @@ const PlateCalculatorTab = () => {
       <div className="flex items-center justify-center my-6 overflow-x-auto">
         <div className="flex items-center space-x-0.5 min-w-0">
           {/* Left plates */}
-          <div className="flex -space-x-0.5">
+          <div className="flex">
             {sortedPlates.map((plate, plateIndex) => (
               Array.from({ length: plate.count }).map((_, i) => (
                 <div
                   key={`left-${plateIndex}-${i}`}
                   className={cn(
-                    "rounded-sm flex items-center justify-center text-xs font-bold flex-shrink-0",
+                    "rounded-sm flex items-center justify-center text-xs font-bold flex-shrink-0 -ml-0.5 first:ml-0",
                     getPlateWidth(plate.plate),
                     getPlateHeight(plate.plate),
                     plate.color,
                     plate.plate === 2.5 || plate.plate === 1.25 ? "text-white" : "text-black"
                   )}
-                  style={{ zIndex: sortedPlates.length - plateIndex }}
+                  style={{ zIndex: 100 - plateIndex - i }}
                 >
                   <span className="transform -rotate-90 text-xs font-bold">
                     {plate.plate}
@@ -271,42 +264,43 @@ const PlateCalculatorTab = () => {
           </div>
           
           {/* Collar */}
-          <div className="w-3 h-6 bg-gray-400 rounded-sm mx-1 flex-shrink-0"></div>
+          <div className="w-2 h-6 bg-gray-400 rounded-sm mx-1 flex-shrink-0"></div>
           
-          {/* Barbell with sleeve design */}
+          {/* Barbell with realistic design */}
           <div className="flex items-center flex-shrink-0">
             {/* Left sleeve */}
-            <div className="w-8 h-8 bg-gradient-to-r from-gray-500 to-gray-600 rounded-full flex items-center justify-center">
-              <div className="w-6 h-6 bg-gray-700 rounded-full"></div>
+            <div className="w-6 h-10 bg-gradient-to-r from-gray-600 to-gray-500 rounded-l-md border-2 border-gray-700 flex items-center justify-center">
+              <div className="w-4 h-8 bg-gray-800 rounded-sm"></div>
             </div>
             {/* Main bar */}
-            <div className="w-32 h-4 bg-gradient-to-b from-gray-400 via-gray-500 to-gray-600 relative">
-              <div className="absolute top-1 left-0 right-0 h-0.5 bg-gray-300 opacity-50"></div>
-              <div className="absolute bottom-1 left-0 right-0 h-0.5 bg-gray-700 opacity-50"></div>
+            <div className="w-24 h-6 bg-gradient-to-b from-gray-300 via-gray-400 to-gray-500 relative border-t-2 border-b-2 border-gray-600">
+              <div className="absolute top-1 left-0 right-0 h-0.5 bg-gray-200 opacity-50"></div>
+              <div className="absolute bottom-1 left-0 right-0 h-0.5 bg-gray-600 opacity-50"></div>
+              <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 w-2 h-2 bg-gray-600 rounded-full"></div>
             </div>
             {/* Right sleeve */}
-            <div className="w-8 h-8 bg-gradient-to-l from-gray-500 to-gray-600 rounded-full flex items-center justify-center">
-              <div className="w-6 h-6 bg-gray-700 rounded-full"></div>
+            <div className="w-6 h-10 bg-gradient-to-l from-gray-600 to-gray-500 rounded-r-md border-2 border-gray-700 flex items-center justify-center">
+              <div className="w-4 h-8 bg-gray-800 rounded-sm"></div>
             </div>
           </div>
           
           {/* Collar */}
-          <div className="w-3 h-6 bg-gray-400 rounded-sm mx-1 flex-shrink-0"></div>
+          <div className="w-2 h-6 bg-gray-400 rounded-sm mx-1 flex-shrink-0"></div>
           
           {/* Right plates */}
-          <div className="flex -space-x-0.5">
+          <div className="flex">
             {sortedPlates.map((plate, plateIndex) => (
               Array.from({ length: plate.count }).map((_, i) => (
                 <div
                   key={`right-${plateIndex}-${i}`}
                   className={cn(
-                    "rounded-sm flex items-center justify-center text-xs font-bold flex-shrink-0",
+                    "rounded-sm flex items-center justify-center text-xs font-bold flex-shrink-0 -mr-0.5 last:mr-0",
                     getPlateWidth(plate.plate),
                     getPlateHeight(plate.plate),
                     plate.color,
                     plate.plate === 2.5 || plate.plate === 1.25 ? "text-white" : "text-black"
                   )}
-                  style={{ zIndex: sortedPlates.length - plateIndex }}
+                  style={{ zIndex: 100 - plateIndex - i }}
                 >
                   <span className="transform rotate-90 text-xs font-bold">
                     {plate.plate}
@@ -323,7 +317,7 @@ const PlateCalculatorTab = () => {
   const ReverseVisualization = () => {
     const reversePlates: PlateCalculation[] = Object.entries(loadedPlates).map(([weight, count]) => ({
       plate: parseFloat(weight),
-      count,
+      count: Number(count),
       color: getPlateColor(parseFloat(weight), isKg)
     }));
 
@@ -338,6 +332,14 @@ const PlateCalculatorTab = () => {
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-orange-400">Plate Calculator</h2>
         <div className="flex space-x-2">
+          <Button
+            onClick={() => setShowCustomBar(!showCustomBar)}
+            size="sm"
+            variant="outline"
+            className="border-orange-600 text-orange-400 hover:bg-orange-600 hover:text-white"
+          >
+            Bar
+          </Button>
           <Button
             onClick={() => setShowPlateManager(!showPlateManager)}
             size="sm"
@@ -359,6 +361,39 @@ const PlateCalculatorTab = () => {
         </CardContent>
       </Card>
 
+      {/* Custom Bar Settings */}
+      {showCustomBar && (
+        <Card className={cn(
+          "border-orange-800",
+          isDarkMode ? "bg-gray-900" : "bg-gray-100"
+        )}>
+          <CardHeader>
+            <CardTitle className="text-orange-400">Custom Bar</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex space-x-2">
+              <Input
+                type="number"
+                value={customBarWeight}
+                onChange={(e) => setCustomBarWeight(e.target.value)}
+                placeholder={`Custom bar weight (${isKg ? 'kg' : 'lbs'})`}
+                className={cn(
+                  "border-gray-700",
+                  isDarkMode ? "bg-gray-800 text-white" : "bg-white text-black"
+                )}
+              />
+              <Button
+                onClick={addCustomBar}
+                size="sm"
+                className="bg-orange-600 hover:bg-orange-700"
+              >
+                Set
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Settings Panels */}
       {showPlateManager && (
         <Card className={cn(
@@ -369,42 +404,6 @@ const PlateCalculatorTab = () => {
             <CardTitle className="text-orange-400">Plate Settings</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex justify-between items-center">
-              <span className={cn(isDarkMode ? "text-white" : "text-black")}>
-                Manage Available Plates
-              </span>
-              <Button
-                onClick={() => setShowCustomBar(!showCustomBar)}
-                size="sm"
-                variant="outline"
-                className="border-orange-600 text-orange-400 hover:bg-orange-600 hover:text-white"
-              >
-                Custom Bar
-              </Button>
-            </div>
-
-            {showCustomBar && (
-              <div className="flex space-x-2 p-3 border rounded-lg">
-                <Input
-                  type="number"
-                  value={customBarWeight}
-                  onChange={(e) => setCustomBarWeight(e.target.value)}
-                  placeholder={`Custom bar weight (${isKg ? 'kg' : 'lbs'})`}
-                  className={cn(
-                    "border-gray-700",
-                    isDarkMode ? "bg-gray-800 text-white" : "bg-white text-black"
-                  )}
-                />
-                <Button
-                  onClick={addCustomBar}
-                  size="sm"
-                  className="bg-orange-600 hover:bg-orange-700"
-                >
-                  Set
-                </Button>
-              </div>
-            )}
-
             {availablePlates.map((plate, index) => (
               <div key={plate.weight} className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
