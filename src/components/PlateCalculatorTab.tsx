@@ -133,10 +133,10 @@ const PlateCalculatorTab = () => {
                 className={cn(
                   "w-4 h-12 rounded-sm mr-0.5 flex items-center justify-center text-xs font-bold",
                   plate.color,
-                  plate.weight === 2.5 || plate.weight === 1.25 ? "text-white" : "text-black"
+                  plate.plate === 2.5 || plate.plate === 1.25 ? "text-white" : "text-black"
                 )}
               >
-                {plate.weight}
+                {plate.plate}
               </div>
             ))
           ))}
@@ -154,10 +154,10 @@ const PlateCalculatorTab = () => {
                 className={cn(
                   "w-4 h-12 rounded-sm ml-0.5 flex items-center justify-center text-xs font-bold",
                   plate.color,
-                  plate.weight === 2.5 || plate.weight === 1.25 ? "text-white" : "text-black"
+                  plate.plate === 2.5 || plate.plate === 1.25 ? "text-white" : "text-black"
                 )}
               >
-                {plate.weight}
+                {plate.plate}
               </div>
             ))
           ))}
@@ -383,8 +383,8 @@ const PlateCalculatorTab = () => {
                   Total Weight: {reverseResult}
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </Card>
+          </div>
         </>
       )}
     </div>
