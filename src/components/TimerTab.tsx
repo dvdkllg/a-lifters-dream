@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useContext } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -130,7 +129,7 @@ const TimerTab = () => {
   };
 
   const progress = initialTime > 0 ? ((initialTime - time) / initialTime) * 100 : 0;
-  const circumference = 2 * Math.PI * 45;
+  const circumference = 2 * Math.PI * 60; // Increased radius from 45 to 60
   const strokeDashoffset = circumference - (progress / 100) * circumference;
 
   return (
@@ -148,20 +147,20 @@ const TimerTab = () => {
         <CardContent className="p-6">
           {/* Timer Display with Circular Progress */}
           <div className="relative flex items-center justify-center mb-6">
-            <svg className="w-32 h-32 transform -rotate-90">
+            <svg className="w-40 h-40 transform -rotate-90">
               <circle
-                cx="64"
-                cy="64"
-                r="45"
+                cx="80"
+                cy="80"
+                r="60"
                 stroke="currentColor"
                 strokeWidth="8"
                 fill="none"
                 className={cn(isDarkMode ? "text-gray-700" : "text-gray-300")}
               />
               <circle
-                cx="64"
-                cy="64"
-                r="45"
+                cx="80"
+                cy="80"
+                r="60"
                 stroke="currentColor"
                 strokeWidth="8"
                 fill="none"
@@ -226,20 +225,6 @@ const TimerTab = () => {
       )}>
         <CardHeader>
           <CardTitle className="text-green-400 text-center">Set Time</CardTitle>
-          <div className="text-center">
-            <span className={cn(
-              "text-2xl font-mono",
-              isDarkMode ? "text-white" : "text-black"
-            )}>
-              {formatInputDisplay(timeInput)}
-            </span>
-            <p className={cn(
-              "text-sm mt-1",
-              isDarkMode ? "text-gray-400" : "text-gray-600"
-            )}>
-              Hours:Minutes:Seconds
-            </p>
-          </div>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-3 gap-3 mb-4">

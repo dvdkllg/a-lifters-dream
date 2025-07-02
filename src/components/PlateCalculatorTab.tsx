@@ -1,4 +1,3 @@
-
 import React, { useState, useContext, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SettingsContext } from '@/pages/Index';
 import { cn } from '@/lib/utils';
-import { ArrowLeftRight, Minus, Settings } from 'lucide-react';
+import { ArrowLeftRight, Minus, Settings, Plus } from 'lucide-react';
 
 interface PlateInfo {
   weight: number;
@@ -46,6 +45,8 @@ const PlateCalculatorTab = () => {
         }))
   );
   const [showPlateManager, setShowPlateManager] = useState(false);
+  const [showCustomBar, setShowCustomBar] = useState(false);
+  const [customBarWeight, setCustomBarWeight] = useState('');
 
   // Update plates and bar weight when unit changes
   useEffect(() => {
@@ -186,106 +187,156 @@ const PlateCalculatorTab = () => {
     });
   };
 
-  // Auto-calculate reverse when plates change
-  useEffect(() => {
-    calculateReverse();
-  }, [loadedPlates, barWeight]);
+  const addCustomBar = () => {
+    const weight = parseFloat(customBarWeight);
+    if (weight > 0) {
+      setBarWeight(weight);
+      setCustomBarWeight('');
+      setShowCustomBar(false);
+    }
+  };
 
-  const PlateVisualization = ({ plateList }: { plateList: PlateCalculation[] }) => (
-    <div className="flex items-center justify-center my-4 overflow-x-auto">
-      <div className="flex items-center space-x-1">
-        {/* Left plates */}
-        <div className="flex">
-          {plateList.map((plate, index) => (
-            Array.from({ length: plate.count }).map((_, i) => (
-              <div
-                key={`left-${index}-${i}`}
-                className={cn(
-                  "w-4 h-12 rounded-sm mr-0.5 flex items-center justify-center text-xs font-bold",
-                  plate.color,
-                  plate.plate === 2.5 || plate.plate === 1.25 ? "text-white" : "text-black"
-                )}
-              >
-                {plate.plate}
-              </div>
-            ))
-          ))}
-        </div>
-        
-        {/* Barbell */}
-        <div className="w-20 h-2 bg-gray-600 mx-2 rounded"></div>
-        
-        {/* Right plates */}
-        <div className="flex">
-          {plateList.map((plate, index) => (
-            Array.from({ length: plate.count }).map((_, i) => (
-              <div
-                key={`right-${index}-${i}`}
-                className={cn(
-                  "w-4 h-12 rounded-sm ml-0.5 flex items-center justify-center text-xs font-bold",
-                  plate.color,
-                  plate.plate === 2.5 || plate.plate === 1.25 ? "text-white" : "text-black"
-                )}
-              >
-                {plate.plate}
-              </div>
-            ))
-          ))}
+  const PlateVisualization = ({ plateList }: { plateList: PlateCalculation[] }) => {
+    // Sort plates by weight (heaviest first for inside placement)
+    const sortedPlates = [...plateList].sort((a, b) => b.plate - a.plate);
+    
+    return (
+      <div className="flex items-center justify-center my-4 overflow-x-auto">
+        <div className="flex items-center space-x-1">
+          {/* Left plates */}
+          <div className="flex">
+            {sortedPlates.map((plate, index) => (
+              Array.from({ length: plate.count }).map((_, i) => (
+                <div
+                  key={`left-${index}-${i}`}
+                  className={cn(
+                    "w-4 h-12 rounded-sm mr-0.5 flex items-center justify-center text-xs font-bold",
+                    plate.color,
+                    plate.plate === 2.5 || plate.plate === 1.25 ? "text-white" : "text-black"
+                  )}
+                >
+                  {plate.plate}
+                </div>
+              ))
+            ))}
+          </div>
+          
+          {/* Barbell */}
+          <div className="w-20 h-2 bg-gray-600 mx-2 rounded"></div>
+          
+          {/* Right plates */}
+          <div className="flex">
+            {sortedPlates.map((plate, index) => (
+              Array.from({ length: plate.count }).map((_, i) => (
+                <div
+                  key={`right-${index}-${i}`}
+                  className={cn(
+                    "w-4 h-12 rounded-sm ml-0.5 flex items-center justify-center text-xs font-bold",
+                    plate.color,
+                    plate.plate === 2.5 || plate.plate === 1.25 ? "text-white" : "text-black"
+                  )}
+                >
+                  {plate.plate}
+                </div>
+              ))
+            ))}
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
+
+  const ReverseVisualization = () => {
+    const reversePlates: PlateCalculation[] = Object.entries(loadedPlates).map(([weight, count]) => ({
+      plate: parseFloat(weight),
+      count,
+      color: getPlateColor(parseFloat(weight), isKg)
+    }));
+
+    return <PlateVisualization plateList={reversePlates} />;
+  };
 
   return (
     <div className={cn(
       "p-4 space-y-6 min-h-full",
       isDarkMode ? "bg-black" : "bg-white"
     )}>
-      <h2 className="text-2xl font-bold text-center text-orange-400">Plate Calculator</h2>
-      
-      {/* Mode Toggle and Plate Manager */}
-      <div className="flex justify-center space-x-2">
-        <Button
-          onClick={() => setIsReverse(!isReverse)}
-          variant="outline"
-          className={cn(
-            "border-orange-600 text-orange-400 hover:bg-orange-600 hover:text-white",
-            isDarkMode ? "bg-gray-900" : "bg-white"
-          )}
-        >
-          <ArrowLeftRight size={16} className="mr-2" />
-          {isReverse ? 'Weight Calculator' : 'Reverse Calculator'}
-        </Button>
-        
-        <Button
-          onClick={() => setShowPlateManager(!showPlateManager)}
-          variant="outline"
-          className={cn(
-            "border-orange-600 text-orange-400 hover:bg-orange-600 hover:text-white",
-            isDarkMode ? "bg-gray-900" : "bg-white"
-          )}
-        >
-          <Settings size={16} className="mr-2" />
-          Manage Plates
-        </Button>
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold text-orange-400">Plate Calculator</h2>
+        <div className="flex space-x-2">
+          <Button
+            onClick={() => setShowPlateManager(!showPlateManager)}
+            size="sm"
+            variant="outline"
+            className="border-orange-600 text-orange-400 hover:bg-orange-600 hover:text-white"
+          >
+            <Settings size={16} />
+          </Button>
+        </div>
       </div>
 
-      {/* Plate Manager */}
+      {/* Always visible bar visualization */}
+      <Card className={cn(
+        "border-orange-800",
+        isDarkMode ? "bg-gray-900" : "bg-gray-100"
+      )}>
+        <CardContent className="p-4">
+          {isReverse ? <ReverseVisualization /> : <PlateVisualization plateList={plates} />}
+        </CardContent>
+      </Card>
+
+      {/* Settings Panels */}
       {showPlateManager && (
         <Card className={cn(
           "border-orange-800",
           isDarkMode ? "bg-gray-900" : "bg-gray-100"
         )}>
           <CardHeader>
-            <CardTitle className="text-orange-400">Manage Available Plates</CardTitle>
+            <CardTitle className="text-orange-400">Plate Settings</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-4">
+            <div className="flex justify-between items-center">
+              <span className={cn(isDarkMode ? "text-white" : "text-black")}>
+                Manage Available Plates
+              </span>
+              <Button
+                onClick={() => setShowCustomBar(!showCustomBar)}
+                size="sm"
+                variant="outline"
+                className="border-orange-600 text-orange-400 hover:bg-orange-600 hover:text-white"
+              >
+                Custom Bar
+              </Button>
+            </div>
+
+            {showCustomBar && (
+              <div className="flex space-x-2 p-3 border rounded-lg">
+                <Input
+                  type="number"
+                  value={customBarWeight}
+                  onChange={(e) => setCustomBarWeight(e.target.value)}
+                  placeholder={`Custom bar weight (${isKg ? 'kg' : 'lbs'})`}
+                  className={cn(
+                    "border-gray-700",
+                    isDarkMode ? "bg-gray-800 text-white" : "bg-white text-black"
+                  )}
+                />
+                <Button
+                  onClick={addCustomBar}
+                  size="sm"
+                  className="bg-orange-600 hover:bg-orange-700"
+                >
+                  Set
+                </Button>
+              </div>
+            )}
+
             {availablePlates.map((plate, index) => (
               <div key={plate.weight} className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <div className={cn("w-4 h-4 rounded-sm", plate.color)}></div>
                   <span className={cn(isDarkMode ? "text-white" : "text-black")}>
-                    {plate.weight} {weightUnit}
+                    {plate.weight} {isKg ? 'kg' : 'lbs'}
                   </span>
                 </div>
                 <Input
@@ -309,6 +360,21 @@ const PlateCalculatorTab = () => {
         </Card>
       )}
 
+      {/* Mode Toggle */}
+      <div className="flex justify-center">
+        <Button
+          onClick={() => setIsReverse(!isReverse)}
+          variant="outline"
+          className={cn(
+            "border-orange-600 text-orange-400 hover:bg-orange-600 hover:text-white",
+            isDarkMode ? "bg-gray-900" : "bg-white"
+          )}
+        >
+          <ArrowLeftRight size={16} className="mr-2" />
+          {isReverse ? 'Weight Calculator' : 'Reverse Calculator'}
+        </Button>
+      </div>
+
       {!isReverse ? (
         <>
           {/* Standard Calculator */}
@@ -323,7 +389,7 @@ const PlateCalculatorTab = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="barWeight" className={cn(isDarkMode ? "text-gray-300" : "text-gray-700")}>
-                    Bar Weight ({weightUnit})
+                    Bar Weight ({isKg ? 'kg' : 'lbs'})
                   </Label>
                   <Select value={barWeight.toString()} onValueChange={(value) => setBarWeight(parseFloat(value))}>
                     <SelectTrigger className={cn(
@@ -357,7 +423,7 @@ const PlateCalculatorTab = () => {
                 
                 <div>
                   <Label htmlFor="targetWeight" className={cn(isDarkMode ? "text-gray-300" : "text-gray-700")}>
-                    Target Weight ({weightUnit})
+                    Target Weight ({isKg ? 'kg' : 'lbs'})
                   </Label>
                   <Input
                     id="targetWeight"
@@ -396,7 +462,7 @@ const PlateCalculatorTab = () => {
           </Card>
 
           {/* Results */}
-          {plates.length > 0 && (
+          {(plates.length > 0 || targetWeight) && (
             <Card className={cn(
               "border-orange-800",
               isDarkMode ? "bg-gray-900" : "bg-gray-100"
@@ -404,18 +470,16 @@ const PlateCalculatorTab = () => {
               <CardHeader>
                 <CardTitle className="text-orange-400">Plates per Side</CardTitle>
                 <p className={cn(isDarkMode ? "text-gray-400" : "text-gray-600")}>
-                  Total weight: {getTotalWeight()} {weightUnit}
+                  Total weight: {getTotalWeight()} {isKg ? 'kg' : 'lbs'}
                   {getClosestWeight() && (
                     <span className="text-yellow-500 ml-2">
-                      (Closest possible: {getClosestWeight()} {weightUnit})
+                      (Closest possible: {getClosestWeight()} {isKg ? 'kg' : 'lbs'})
                     </span>
                   )}
                 </p>
               </CardHeader>
               <CardContent>
-                <PlateVisualization plateList={plates} />
-                
-                <div className="space-y-3 mt-4">
+                <div className="space-y-3">
                   {plates.map((plate, index) => (
                     <div key={index} className={cn(
                       "flex justify-between items-center p-3 rounded-lg",
@@ -424,7 +488,7 @@ const PlateCalculatorTab = () => {
                       <div className="flex items-center space-x-3">
                         <div className={cn("w-4 h-4 rounded-sm", plate.color)}></div>
                         <span className={cn(isDarkMode ? "text-white" : "text-black", "font-semibold")}>
-                          {plate.plate} {weightUnit}
+                          {plate.plate} {isKg ? 'kg' : 'lbs'}
                         </span>
                       </div>
                       <span className="text-orange-400 font-bold">x{plate.count}</span>
@@ -451,7 +515,7 @@ const PlateCalculatorTab = () => {
             <CardContent className="space-y-4">
               <div>
                 <Label className={cn(isDarkMode ? "text-gray-300" : "text-gray-700")}>
-                  Bar Weight: {barWeight} {weightUnit}
+                  Bar Weight: {barWeight} {isKg ? 'kg' : 'lbs'}
                 </Label>
               </div>
               

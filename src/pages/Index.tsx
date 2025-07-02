@@ -1,7 +1,7 @@
 
 import React, { useState, createContext, useContext } from 'react';
 import { cn } from '@/lib/utils';
-import { Pill, Calculator, Timer, Weight, Settings, Scale } from 'lucide-react';
+import { Pill, Calculator, Timer, Weight, Settings, Scale, LogIn } from 'lucide-react';
 import SupplementsTab from '@/components/SupplementsTab';
 import CalculatorTab from '@/components/CalculatorTab';
 import TimerTab from '@/components/TimerTab';
@@ -20,7 +20,7 @@ interface AppSettings {
 
 export const SettingsContext = createContext<AppSettings>({
   isDarkMode: true,
-  isKg: false,
+  isKg: true, // Changed default to true (kg)
   setIsDarkMode: () => {},
   setIsKg: () => {}
 });
@@ -29,7 +29,7 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState<TabType>('supplements');
   const [showSettings, setShowSettings] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(true);
-  const [isKg, setIsKg] = useState(false);
+  const [isKg, setIsKg] = useState(true); // Changed default to true (kg)
 
   const renderActiveTab = () => {
     switch (activeTab) {
@@ -65,23 +65,6 @@ const Index = () => {
     }
   };
 
-  const getAccentColor = () => {
-    switch (activeTab) {
-      case 'supplements':
-        return 'bg-purple-400';
-      case 'calculator':
-        return 'bg-blue-400';
-      case 'timer':
-        return 'bg-green-400';
-      case 'platecalculator':
-        return 'bg-orange-400';
-      case 'unitconverter':
-        return 'bg-cyan-400';
-      default:
-        return 'bg-purple-400';
-    }
-  };
-
   return (
     <SettingsContext.Provider value={{ isDarkMode, isKg, setIsDarkMode, setIsKg }}>
       <div className={cn(
@@ -93,26 +76,31 @@ const Index = () => {
           "p-4 shadow-lg relative",
           isDarkMode ? "bg-gray-900" : "bg-gray-100"
         )}>
-          <h1 className={cn("text-xl font-bold text-center", getTitleColor())}>
-            A Lifter's Dream
-          </h1>
-          {/* Colored line below title */}
-          <div className={cn("h-0.5 w-full mt-2", getAccentColor())}></div>
-          <button
-            onClick={() => setShowSettings(true)}
-            className="absolute top-4 right-4 p-2 rounded-lg hover:bg-gray-800 transition-colors"
-          >
-            <Settings size={20} className="text-gray-400" />
-          </button>
+          <div className="flex justify-between items-center">
+            <h1 className={cn("text-xl font-bold", getTitleColor())}>
+              A Lifter's Dream
+            </h1>
+            <div className="flex items-center space-x-2">
+              <button
+                className="flex items-center space-x-2 p-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+              >
+                <LogIn size={16} />
+                <span className="text-sm">Login</span>
+              </button>
+              <button
+                onClick={() => setShowSettings(true)}
+                className="p-2 rounded-lg hover:bg-gray-800 transition-colors"
+              >
+                <Settings size={20} className="text-gray-400" />
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Main Content */}
         <div className="flex-1 overflow-auto pb-24">
           {renderActiveTab()}
         </div>
-
-        {/* Colored line above navigation */}
-        <div className={cn("h-0.5 w-full", getAccentColor())}></div>
 
         {/* Fixed Bottom Navigation */}
         <div className={cn(
