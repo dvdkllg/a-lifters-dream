@@ -1,3 +1,4 @@
+
 import React, { useState, useContext, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -67,9 +68,16 @@ const PlateCalculatorTab = () => {
     setAvailablePlates(newPlates);
     setBarWeight(isKg ? 20 : 45);
     setLoadedPlates({});
-    setReverseResult('');
+    setReverseResult(`${isKg ? 20 : 45} ${isKg ? 'kg' : 'lbs'}`);
     setPlates([]);
   }, [isKg]);
+
+  // Initialize reverse result on component mount
+  useEffect(() => {
+    if (reverseResult === '') {
+      setReverseResult(`${barWeight} ${isKg ? 'kg' : 'lbs'}`);
+    }
+  }, [barWeight, isKg, reverseResult]);
 
   const weightUnit = isKg ? 'kg' : 'lbs';
 
@@ -167,23 +175,45 @@ const PlateCalculatorTab = () => {
   };
 
   const addPlateToReverse = (plateWeight: number) => {
-    setLoadedPlates(prev => ({
-      ...prev,
-      [plateWeight]: (prev[plateWeight] || 0) + 1
-    }));
+    setLoadedPlates(prev => {
+      const newPlates = {
+        ...prev,
+        [plateWeight]: (prev[plateWeight] || 0) + 1
+      };
+      
+      // Calculate new total immediately
+      const totalPlateWeight = Object.entries(newPlates).reduce((sum, [weight, count]) => {
+        return sum + (parseFloat(weight) * count);
+      }, 0);
+      const total = barWeight + (totalPlateWeight * 2);
+      setReverseResult(`${total} ${weightUnit}`);
+      
+      return newPlates;
+    });
   };
 
   const removePlateFromReverse = (plateWeight: number) => {
     setLoadedPlates(prev => {
       const newCount = (prev[plateWeight] || 0) - 1;
+      let newPlates;
       if (newCount <= 0) {
         const { [plateWeight]: _, ...rest } = prev;
-        return rest;
+        newPlates = rest;
+      } else {
+        newPlates = {
+          ...prev,
+          [plateWeight]: newCount
+        };
       }
-      return {
-        ...prev,
-        [plateWeight]: newCount
-      };
+      
+      // Calculate new total immediately
+      const totalPlateWeight = Object.entries(newPlates).reduce((sum, [weight, count]) => {
+        return sum + (parseFloat(weight) * count);
+      }, 0);
+      const total = barWeight + (totalPlateWeight * 2);
+      setReverseResult(`${total} ${weightUnit}`);
+      
+      return newPlates;
     });
   };
 
@@ -200,43 +230,87 @@ const PlateCalculatorTab = () => {
     // Sort plates by weight (heaviest first for inside placement)
     const sortedPlates = [...plateList].sort((a, b) => b.plate - a.plate);
     
+    const getPlateWidth = (weight: number) => {
+      if (weight >= 20 || weight >= 45) return 'w-5';
+      if (weight >= 10 || weight >= 25) return 'w-4';
+      if (weight >= 5 || weight >= 10) return 'w-3';
+      return 'w-2';
+    };
+
+    const getPlateHeight = (weight: number) => {
+      if (weight >= 20 || weight >= 45) return 'h-16';
+      if (weight >= 10 || weight >= 25) return 'h-14';
+      if (weight >= 5 || weight >= 10) return 'h-12';
+      return 'h-10';
+    };
+    
     return (
-      <div className="flex items-center justify-center my-4 overflow-x-auto">
-        <div className="flex items-center space-x-1">
+      <div className="flex items-center justify-center my-6 overflow-x-auto">
+        <div className="flex items-center space-x-0.5 min-w-0">
           {/* Left plates */}
-          <div className="flex">
-            {sortedPlates.map((plate, index) => (
+          <div className="flex -space-x-0.5">
+            {sortedPlates.map((plate, plateIndex) => (
               Array.from({ length: plate.count }).map((_, i) => (
                 <div
-                  key={`left-${index}-${i}`}
+                  key={`left-${plateIndex}-${i}`}
                   className={cn(
-                    "w-4 h-12 rounded-sm mr-0.5 flex items-center justify-center text-xs font-bold",
+                    "rounded-sm flex items-center justify-center text-xs font-bold flex-shrink-0",
+                    getPlateWidth(plate.plate),
+                    getPlateHeight(plate.plate),
                     plate.color,
                     plate.plate === 2.5 || plate.plate === 1.25 ? "text-white" : "text-black"
                   )}
+                  style={{ zIndex: sortedPlates.length - plateIndex }}
                 >
-                  {plate.plate}
+                  <span className="transform -rotate-90 text-xs font-bold">
+                    {plate.plate}
+                  </span>
                 </div>
               ))
             ))}
           </div>
           
-          {/* Barbell */}
-          <div className="w-20 h-2 bg-gray-600 mx-2 rounded"></div>
+          {/* Collar */}
+          <div className="w-3 h-6 bg-gray-400 rounded-sm mx-1 flex-shrink-0"></div>
+          
+          {/* Barbell with sleeve design */}
+          <div className="flex items-center flex-shrink-0">
+            {/* Left sleeve */}
+            <div className="w-8 h-8 bg-gradient-to-r from-gray-500 to-gray-600 rounded-full flex items-center justify-center">
+              <div className="w-6 h-6 bg-gray-700 rounded-full"></div>
+            </div>
+            {/* Main bar */}
+            <div className="w-32 h-4 bg-gradient-to-b from-gray-400 via-gray-500 to-gray-600 relative">
+              <div className="absolute top-1 left-0 right-0 h-0.5 bg-gray-300 opacity-50"></div>
+              <div className="absolute bottom-1 left-0 right-0 h-0.5 bg-gray-700 opacity-50"></div>
+            </div>
+            {/* Right sleeve */}
+            <div className="w-8 h-8 bg-gradient-to-l from-gray-500 to-gray-600 rounded-full flex items-center justify-center">
+              <div className="w-6 h-6 bg-gray-700 rounded-full"></div>
+            </div>
+          </div>
+          
+          {/* Collar */}
+          <div className="w-3 h-6 bg-gray-400 rounded-sm mx-1 flex-shrink-0"></div>
           
           {/* Right plates */}
-          <div className="flex">
-            {sortedPlates.map((plate, index) => (
+          <div className="flex -space-x-0.5">
+            {sortedPlates.map((plate, plateIndex) => (
               Array.from({ length: plate.count }).map((_, i) => (
                 <div
-                  key={`right-${index}-${i}`}
+                  key={`right-${plateIndex}-${i}`}
                   className={cn(
-                    "w-4 h-12 rounded-sm ml-0.5 flex items-center justify-center text-xs font-bold",
+                    "rounded-sm flex items-center justify-center text-xs font-bold flex-shrink-0",
+                    getPlateWidth(plate.plate),
+                    getPlateHeight(plate.plate),
                     plate.color,
                     plate.plate === 2.5 || plate.plate === 1.25 ? "text-white" : "text-black"
                   )}
+                  style={{ zIndex: sortedPlates.length - plateIndex }}
                 >
-                  {plate.plate}
+                  <span className="transform rotate-90 text-xs font-bold">
+                    {plate.plate}
+                  </span>
                 </div>
               ))
             ))}

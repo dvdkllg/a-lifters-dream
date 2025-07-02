@@ -1,7 +1,7 @@
 
 import React, { useState, createContext, useContext } from 'react';
 import { cn } from '@/lib/utils';
-import { Pill, Calculator, Timer, Weight, Settings, Scale, LogIn } from 'lucide-react';
+import { Pill, Calculator, Timer, Weight, Settings, Scale, User } from 'lucide-react';
 import SupplementsTab from '@/components/SupplementsTab';
 import CalculatorTab from '@/components/CalculatorTab';
 import TimerTab from '@/components/TimerTab';
@@ -20,7 +20,7 @@ interface AppSettings {
 
 export const SettingsContext = createContext<AppSettings>({
   isDarkMode: true,
-  isKg: true, // Changed default to true (kg)
+  isKg: true,
   setIsDarkMode: () => {},
   setIsKg: () => {}
 });
@@ -29,7 +29,7 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState<TabType>('supplements');
   const [showSettings, setShowSettings] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(true);
-  const [isKg, setIsKg] = useState(true); // Changed default to true (kg)
+  const [isKg, setIsKg] = useState(true);
 
   const renderActiveTab = () => {
     switch (activeTab) {
@@ -77,23 +77,20 @@ const Index = () => {
           isDarkMode ? "bg-gray-900" : "bg-gray-100"
         )}>
           <div className="flex justify-between items-center">
-            <h1 className={cn("text-xl font-bold", getTitleColor())}>
+            <button
+              className="flex items-center space-x-2 p-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+            >
+              <User size={20} />
+            </button>
+            <h1 className={cn("text-xl font-bold absolute left-1/2 transform -translate-x-1/2", getTitleColor())}>
               A Lifter's Dream
             </h1>
-            <div className="flex items-center space-x-2">
-              <button
-                className="flex items-center space-x-2 p-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors"
-              >
-                <LogIn size={16} />
-                <span className="text-sm">Login</span>
-              </button>
-              <button
-                onClick={() => setShowSettings(true)}
-                className="p-2 rounded-lg hover:bg-gray-800 transition-colors"
-              >
-                <Settings size={20} className="text-gray-400" />
-              </button>
-            </div>
+            <button
+              onClick={() => setShowSettings(true)}
+              className="p-2 rounded-lg hover:bg-gray-800 transition-colors"
+            >
+              <Settings size={20} className="text-gray-400" />
+            </button>
           </div>
         </div>
 
