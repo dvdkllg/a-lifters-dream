@@ -63,8 +63,10 @@ const TimerTab = () => {
     }
 
     const newInput = timeInput + num;
-    setTimeInput(newInput);
-    updateTimeFromInput(newInput);
+    if (newInput.length <= 6) { // Limit to 6 digits (HHMMSS)
+      setTimeInput(newInput);
+      updateTimeFromInput(newInput);
+    }
   };
 
   const updateTimeFromInput = (input: string) => {
@@ -74,22 +76,43 @@ const TimerTab = () => {
       return;
     }
 
-    // Convert input to seconds
-    const seconds = parseInt(input) || 0;
-    setTime(seconds);
-    setInitialTime(seconds);
+    // Pad input to 6 digits and parse as HHMMSS
+    const paddedInput = input.padStart(6, '0');
+    const hours = parseInt(paddedInput.slice(0, 2)) || 0;
+    const minutes = parseInt(paddedInput.slice(2, 4)) || 0;
+    const seconds = parseInt(paddedInput.slice(4, 6)) || 0;
+    
+    const totalSeconds = hours * 3600 + minutes * 60 + seconds;
+    setTime(totalSeconds);
+    setInitialTime(totalSeconds);
   };
 
   const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
+    const hours = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const formatInputDisplay = (input: string) => {
+    if (!input) return '00:00:00';
+    
+    const paddedInput = input.padStart(6, '0');
+    const hours = paddedInput.slice(0, 2);
+    const minutes = paddedInput.slice(2, 4);
+    const seconds = paddedInput.slice(4, 6);
+    return `${hours}:${minutes}:${seconds}`;
   };
 
   const setPresetTime = (seconds: number) => {
     setTime(seconds);
     setInitialTime(seconds);
-    setTimeInput(seconds.toString());
+    // Convert seconds back to input format
+    const hours = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    const inputStr = `${hours.toString().padStart(2, '0')}${mins.toString().padStart(2, '0')}${secs.toString().padStart(2, '0')}`;
+    setTimeInput(inputStr.replace(/^0+/, '') || '0');
     setIsRunning(false);
   };
 
@@ -202,14 +225,20 @@ const TimerTab = () => {
         isDarkMode ? "bg-gray-900" : "bg-gray-100"
       )}>
         <CardHeader>
-          <CardTitle className="text-green-400 text-center">Set Time (seconds)</CardTitle>
+          <CardTitle className="text-green-400 text-center">Set Time</CardTitle>
           <div className="text-center">
             <span className={cn(
-              "text-lg font-mono",
+              "text-2xl font-mono",
               isDarkMode ? "text-white" : "text-black"
             )}>
-              {timeInput || '0'} seconds
+              {formatInputDisplay(timeInput)}
             </span>
+            <p className={cn(
+              "text-sm mt-1",
+              isDarkMode ? "text-gray-400" : "text-gray-600"
+            )}>
+              Hours:Minutes:Seconds
+            </p>
           </div>
         </CardHeader>
         <CardContent>

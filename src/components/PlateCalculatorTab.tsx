@@ -1,5 +1,5 @@
 
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -46,6 +46,29 @@ const PlateCalculatorTab = () => {
         }))
   );
   const [showPlateManager, setShowPlateManager] = useState(false);
+
+  // Update plates and bar weight when unit changes
+  useEffect(() => {
+    const newPlates = isKg 
+      ? [25, 20, 15, 10, 5, 2.5, 1.25].map(weight => ({
+          weight,
+          count: 0,
+          available: 10,
+          color: getPlateColor(weight, true)
+        }))
+      : [55, 45, 35, 25, 10, 5, 2.5].map(weight => ({
+          weight,
+          count: 0,
+          available: 10,
+          color: getPlateColor(weight, false)
+        }));
+    
+    setAvailablePlates(newPlates);
+    setBarWeight(isKg ? 20 : 45);
+    setLoadedPlates({});
+    setReverseResult('');
+    setPlates([]);
+  }, [isKg]);
 
   const weightUnit = isKg ? 'kg' : 'lbs';
 
@@ -141,6 +164,32 @@ const PlateCalculatorTab = () => {
     }
     return null;
   };
+
+  const addPlateToReverse = (plateWeight: number) => {
+    setLoadedPlates(prev => ({
+      ...prev,
+      [plateWeight]: (prev[plateWeight] || 0) + 1
+    }));
+  };
+
+  const removePlateFromReverse = (plateWeight: number) => {
+    setLoadedPlates(prev => {
+      const newCount = (prev[plateWeight] || 0) - 1;
+      if (newCount <= 0) {
+        const { [plateWeight]: _, ...rest } = prev;
+        return rest;
+      }
+      return {
+        ...prev,
+        [plateWeight]: newCount
+      };
+    });
+  };
+
+  // Auto-calculate reverse when plates change
+  useEffect(() => {
+    calculateReverse();
+  }, [loadedPlates, barWeight]);
 
   const PlateVisualization = ({ plateList }: { plateList: PlateCalculation[] }) => (
     <div className="flex items-center justify-center my-4 overflow-x-auto">
@@ -396,7 +445,7 @@ const PlateCalculatorTab = () => {
             <CardHeader>
               <CardTitle className="text-orange-400">Reverse Calculator</CardTitle>
               <p className={cn(isDarkMode ? "text-gray-400" : "text-gray-600")}>
-                Enter loaded plates to calculate total weight
+                Tap plates to add them to both sides
               </p>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -406,60 +455,56 @@ const PlateCalculatorTab = () => {
                 </Label>
               </div>
               
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <Label className={cn(isDarkMode ? "text-gray-300" : "text-gray-700")}>
-                  Plates per Side:
+                  Available Plates:
                 </Label>
-                {availablePlates.map((plate) => (
-                  <div key={plate.weight} className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className={cn("w-4 h-4 rounded-sm", plate.color)}></div>
-                      <span className={cn(isDarkMode ? "text-white" : "text-black")}>
-                        {plate.weight} {weightUnit}
+                <div className="grid grid-cols-4 gap-3">
+                  {availablePlates.map((plate) => (
+                    <div key={plate.weight} className="flex flex-col items-center space-y-2">
+                      <button
+                        onClick={() => addPlateToReverse(plate.weight)}
+                        className={cn(
+                          "w-12 h-12 rounded-full flex items-center justify-center text-xs font-bold transition-transform hover:scale-105",
+                          plate.color,
+                          plate.weight === 2.5 || plate.weight === 1.25 ? "text-white" : "text-black"
+                        )}
+                      >
+                        {plate.weight}
+                      </button>
+                      <span className={cn(
+                        "text-xs",
+                        isDarkMode ? "text-gray-400" : "text-gray-600"
+                      )}>
+                        {loadedPlates[plate.weight] || 0}
                       </span>
-                    </div>
-                    <Input
-                      type="number"
-                      min="0"
-                      max="10"
-                      value={loadedPlates[plate.weight] || 0}
-                      onChange={(e) => setLoadedPlates(prev => ({
-                        ...prev,
-                        [plate.weight]: parseInt(e.target.value) || 0
-                      }))}
-                      className={cn(
-                        "w-20 border-gray-700",
-                        isDarkMode ? "bg-gray-800 text-white" : "bg-white text-black"
+                      {loadedPlates[plate.weight] > 0 && (
+                        <button
+                          onClick={() => removePlateFromReverse(plate.weight)}
+                          className="text-xs text-red-400 hover:text-red-300"
+                        >
+                          Remove
+                        </button>
                       )}
-                    />
-                  </div>
-                ))}
-              </div>
-              
-              <div className="flex space-x-2">
-                <Button
-                  onClick={calculateReverse}
-                  className="flex-1 bg-orange-600 hover:bg-orange-700"
-                >
-                  Calculate Total
-                </Button>
-                <Button
-                  onClick={emptyBar}
-                  variant="outline"
-                  className="border-orange-600 text-orange-400 hover:bg-orange-600 hover:text-white"
-                >
-                  Empty Bar
-                </Button>
-              </div>
-              
-              {reverseResult && (
-                <div className={cn(
-                  "p-3 rounded text-center font-bold text-lg",
-                  isDarkMode ? "bg-gray-800 text-orange-400" : "bg-gray-200 text-orange-600"
-                )}>
-                  Total Weight: {reverseResult}
+                    </div>
+                  ))}
                 </div>
-              )}
+              </div>
+              
+              <Button
+                onClick={emptyBar}
+                variant="outline"
+                className="border-orange-600 text-orange-400 hover:bg-orange-600 hover:text-white w-full"
+              >
+                Empty Bar
+              </Button>
+              
+              <div className={cn(
+                "p-4 rounded text-center font-bold text-xl",
+                isDarkMode ? "bg-gray-800 text-orange-400" : "bg-gray-200 text-orange-600"
+              )}>
+                Total Weight: {reverseResult}
+              </div>
             </CardContent>
           </Card>
         </>
