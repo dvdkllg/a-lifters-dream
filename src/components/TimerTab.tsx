@@ -1,56 +1,84 @@
 
-import React, { useState, useEffect, useRef, useContext } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Play, Pause, Plus, Delete, ArrowLeft } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { SettingsContext } from '@/pages/Index';
 import { cn } from '@/lib/utils';
-
-interface Preset {
-  id: string;
-  name: string;
-  seconds: number;
-}
+import { Play, Pause, RotateCcw, Plus, Trash2 } from 'lucide-react';
 
 const TimerTab = () => {
   const { isDarkMode } = useContext(SettingsContext);
   const [time, setTime] = useState(0);
-  const [originalTime, setOriginalTime] = useState(0);
+  const [initialTime, setInitialTime] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
-  const [presets, setPresets] = useState<Preset[]>([
-    { id: '1', name: '1 min', seconds: 60 },
-    { id: '2', name: '3 min', seconds: 180 },
-    { id: '3', name: '5 min', seconds: 300 }
-  ]);
-  const [showPresetForm, setShowPresetForm] = useState(false);
-  const [newPresetName, setNewPresetName] = useState('');
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [timeInput, setTimeInput] = useState('');
+  const [presets, setPresets] = useState([60, 90, 120, 180, 300]);
+  const [newPreset, setNewPreset] = useState('');
+  const [showAddPreset, setShowAddPreset] = useState(false);
 
   useEffect(() => {
+    let interval: NodeJS.Timeout;
     if (isRunning && time > 0) {
-      intervalRef.current = setInterval(() => {
-        setTime(prevTime => {
-          if (prevTime <= 1) {
-            setIsRunning(false);
-            alert('Rest complete! Time to get back to work! 💪');
-            return 0;
-          }
-          return prevTime - 1;
-        });
+      interval = setInterval(() => {
+        setTime(time => time - 1);
       }, 1000);
-    } else {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
+    } else if (time === 0 && isRunning) {
+      setIsRunning(false);
+      // Timer finished - could add notification here
+    }
+    return () => clearInterval(interval);
+  }, [isRunning, time]);
+
+  const handleStart = () => {
+    if (time > 0) {
+      setIsRunning(!isRunning);
+    }
+  };
+
+  const handleReset = () => {
+    setIsRunning(false);
+    setTime(initialTime);
+  };
+
+  const addMinute = () => {
+    setTime(prev => prev + 60);
+    setInitialTime(prev => prev + 60);
+  };
+
+  const handleNumberPad = (num: string) => {
+    if (num === 'clear') {
+      setTimeInput('');
+      setTime(0);
+      setInitialTime(0);
+      return;
+    }
+    
+    if (num === 'back') {
+      const newInput = timeInput.slice(0, -1);
+      setTimeInput(newInput);
+      updateTimeFromInput(newInput);
+      return;
     }
 
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
-  }, [isRunning, time]);
+    const newInput = timeInput + num;
+    setTimeInput(newInput);
+    updateTimeFromInput(newInput);
+  };
+
+  const updateTimeFromInput = (input: string) => {
+    if (!input) {
+      setTime(0);
+      setInitialTime(0);
+      return;
+    }
+
+    // Convert input to seconds
+    const seconds = parseInt(input) || 0;
+    setTime(seconds);
+    setInitialTime(seconds);
+  };
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -58,91 +86,29 @@ const TimerTab = () => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const handleNumpadInput = (digit: string) => {
-    if (isRunning) return;
-
-    if (digit === 'clear') {
-      setTime(0);
-      setOriginalTime(0);
-      return;
-    }
-
-    if (digit === 'back') {
-      const timeString = Math.floor(time / 60).toString().padStart(2, '0') + 
-                        (time % 60).toString().padStart(2, '0');
-      const newTimeString = timeString.slice(0, -1).padStart(4, '0');
-      const mins = parseInt(newTimeString.slice(0, 2));
-      const secs = parseInt(newTimeString.slice(2));
-      const totalSeconds = (mins * 60) + secs;
-      setTime(totalSeconds);
-      setOriginalTime(totalSeconds);
-      return;
-    }
-
-    // Handle digit input
-    const currentMins = Math.floor(time / 60);
-    const currentSecs = time % 60;
-    const timeString = currentMins.toString().padStart(2, '0') + 
-                      currentSecs.toString().padStart(2, '0');
-    
-    if (timeString.length >= 4 && timeString !== '0000') return;
-    
-    const newTimeString = (timeString + digit).slice(-4);
-    const mins = parseInt(newTimeString.slice(0, 2));
-    const secs = parseInt(newTimeString.slice(2));
-    
-    if (secs > 59) return;
-    
-    const totalSeconds = (mins * 60) + secs;
-    setTime(totalSeconds);
-    setOriginalTime(totalSeconds);
-  };
-
-  const toggleTimer = () => {
-    if (time > 0) {
-      setIsRunning(!isRunning);
-    }
-  };
-
-  const addMinute = () => {
-    if (!isRunning) {
-      const newTime = time + 60;
-      setTime(newTime);
-      setOriginalTime(newTime);
-    }
-  };
-
-  const getProgressPercentage = () => {
-    if (originalTime === 0) return 0;
-    return ((originalTime - time) / originalTime) * 100;
+  const setPresetTime = (seconds: number) => {
+    setTime(seconds);
+    setInitialTime(seconds);
+    setTimeInput(seconds.toString());
+    setIsRunning(false);
   };
 
   const addPreset = () => {
-    if (newPresetName && time > 0) {
-      const newPreset: Preset = {
-        id: Date.now().toString(),
-        name: newPresetName,
-        seconds: time
-      };
-      setPresets([...presets, newPreset]);
-      setNewPresetName('');
-      setShowPresetForm(false);
+    const seconds = parseInt(newPreset) || 0;
+    if (seconds > 0 && !presets.includes(seconds)) {
+      setPresets([...presets, seconds].sort((a, b) => a - b));
+      setNewPreset('');
+      setShowAddPreset(false);
     }
   };
 
-  const loadPreset = (seconds: number) => {
-    if (!isRunning) {
-      setTime(seconds);
-      setOriginalTime(seconds);
-    }
+  const removePreset = (seconds: number) => {
+    setPresets(presets.filter(p => p !== seconds));
   };
 
-  const deletePreset = (id: string) => {
-    setPresets(presets.filter(p => p.id !== id));
-  };
-
-  const circumference = 2 * Math.PI * 90; // radius of 90
-  const strokeDashoffset = circumference - (getProgressPercentage() / 100) * circumference;
+  const progress = initialTime > 0 ? ((initialTime - time) / initialTime) * 100 : 0;
+  const circumference = 2 * Math.PI * 45;
+  const strokeDashoffset = circumference - (progress / 100) * circumference;
 
   return (
     <div className={cn(
@@ -151,109 +117,134 @@ const TimerTab = () => {
     )}>
       <h2 className="text-2xl font-bold text-center text-green-400">Rest Timer</h2>
       
-      {/* Timer Display with Circle */}
+      {/* Main Timer */}
       <Card className={cn(
         "border-green-800",
         isDarkMode ? "bg-gray-900" : "bg-gray-100"
       )}>
-        <CardContent className="p-8">
-          <div className="text-center">
-            <div className="relative w-48 h-48 mx-auto mb-6">
-              <svg className="w-48 h-48 transform -rotate-90" viewBox="0 0 200 200">
-                {/* Background circle */}
-                <circle
-                  cx="100"
-                  cy="100"
-                  r="90"
-                  stroke={isDarkMode ? "#374151" : "#d1d5db"}
-                  strokeWidth="8"
-                  fill="transparent"
-                />
-                {/* Progress circle */}
-                <circle
-                  cx="100"
-                  cy="100"
-                  r="90"
-                  stroke="#10b981"
-                  strokeWidth="8"
-                  fill="transparent"
-                  strokeDasharray={circumference}
-                  strokeDashoffset={strokeDashoffset}
-                  strokeLinecap="round"
-                  className="transition-all duration-1000"
-                />
-              </svg>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-4xl font-bold text-green-400">
-                  {formatTime(time)}
-                </div>
-              </div>
+        <CardContent className="p-6">
+          {/* Timer Display with Circular Progress */}
+          <div className="relative flex items-center justify-center mb-6">
+            <svg className="w-32 h-32 transform -rotate-90">
+              <circle
+                cx="64"
+                cy="64"
+                r="45"
+                stroke="currentColor"
+                strokeWidth="8"
+                fill="none"
+                className={cn(isDarkMode ? "text-gray-700" : "text-gray-300")}
+              />
+              <circle
+                cx="64"
+                cy="64"
+                r="45"
+                stroke="currentColor"
+                strokeWidth="8"
+                fill="none"
+                strokeLinecap="round"
+                className="text-green-400"
+                style={{
+                  strokeDasharray: circumference,
+                  strokeDashoffset: strokeDashoffset,
+                  transition: 'stroke-dashoffset 1s linear'
+                }}
+              />
+            </svg>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className={cn(
+                "text-2xl font-bold",
+                isDarkMode ? "text-white" : "text-black"
+              )}>
+                {formatTime(time)}
+              </span>
             </div>
+          </div>
+
+          {/* Control Buttons */}
+          <div className="flex justify-center space-x-4 mb-6">
+            <Button
+              onClick={handleStart}
+              className={cn(
+                "flex items-center space-x-2",
+                isRunning 
+                  ? "bg-red-600 hover:bg-red-700" 
+                  : "bg-green-600 hover:bg-green-700"
+              )}
+            >
+              {isRunning ? <Pause size={20} /> : <Play size={20} />}
+              <span>{isRunning ? 'Pause' : 'Start'}</span>
+            </Button>
             
-            <div className="flex justify-center gap-4">
-              <Button
-                onClick={toggleTimer}
-                disabled={time === 0}
-                className="bg-green-600 hover:bg-green-700 px-8"
-              >
-                {isRunning ? <Pause size={20} /> : <Play size={20} />}
-                {isRunning ? 'Pause' : 'Start'}
-              </Button>
-              
-              <Button
-                onClick={addMinute}
-                disabled={isRunning}
-                variant="outline"
-                className="border-green-600 text-green-400 hover:bg-green-600 hover:text-white px-6"
-              >
-                +1:00
-              </Button>
-            </div>
+            <Button
+              onClick={addMinute}
+              variant="outline"
+              className="border-green-600 text-green-400 hover:bg-green-600 hover:text-white"
+            >
+              <Plus size={16} />
+              1:00
+            </Button>
+            
+            <Button
+              onClick={handleReset}
+              variant="outline"
+              className="border-green-600 text-green-400 hover:bg-green-600 hover:text-white"
+            >
+              <RotateCcw size={16} />
+            </Button>
           </div>
         </CardContent>
       </Card>
 
-      {/* Numpad */}
+      {/* Number Pad */}
       <Card className={cn(
         "border-green-800",
         isDarkMode ? "bg-gray-900" : "bg-gray-100"
       )}>
-        <CardContent className="p-4">
-          <div className="grid grid-cols-3 gap-3">
+        <CardHeader>
+          <CardTitle className="text-green-400 text-center">Set Time (seconds)</CardTitle>
+          <div className="text-center">
+            <span className={cn(
+              "text-lg font-mono",
+              isDarkMode ? "text-white" : "text-black"
+            )}>
+              {timeInput || '0'} seconds
+            </span>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-3 gap-3 mb-4">
             {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
               <Button
                 key={num}
-                onClick={() => handleNumpadInput(num.toString())}
-                disabled={isRunning}
-                variant="outline"
-                className="border-green-600 text-green-400 hover:bg-green-600 hover:text-white h-12 text-lg font-semibold"
+                onClick={() => handleNumberPad(num.toString())}
+                className={cn(
+                  "h-12 text-lg font-bold bg-green-600 hover:bg-green-700 text-white"
+                )}
               >
                 {num}
               </Button>
             ))}
+          </div>
+          
+          <div className="grid grid-cols-3 gap-3">
             <Button
-              onClick={() => handleNumpadInput('clear')}
-              disabled={isRunning}
-              variant="outline"
-              className="border-green-600 text-green-400 hover:bg-green-600 hover:text-white h-12 text-sm font-semibold"
+              onClick={() => handleNumberPad('clear')}
+              className="h-12 bg-red-600 hover:bg-red-700 text-white font-bold"
             >
               Clear
             </Button>
             <Button
-              onClick={() => handleNumpadInput('0')}
-              disabled={isRunning}
-              variant="outline"
-              className="border-green-600 text-green-400 hover:bg-green-600 hover:text-white h-12 text-lg font-semibold"
+              onClick={() => handleNumberPad('0')}
+              className="h-12 text-lg font-bold bg-green-600 hover:bg-green-700 text-white"
             >
               0
             </Button>
             <Button
-              onClick={() => handleNumpadInput('back')}
-              disabled={isRunning}
-              variant="outline"
-              className="border-green-600 text-green-400 hover:bg-green-600 hover:text-white h-12"
+              onClick={() => handleNumberPad('back')}
+              className="h-12 bg-orange-600 hover:bg-orange-700 text-white font-bold"
             >
-              <ArrowLeft size={20} />
+              Back
             </Button>
           </div>
         </CardContent>
@@ -268,7 +259,7 @@ const TimerTab = () => {
           <div className="flex justify-between items-center">
             <CardTitle className="text-green-400">Presets</CardTitle>
             <Button
-              onClick={() => setShowPresetForm(!showPresetForm)}
+              onClick={() => setShowAddPreset(!showAddPreset)}
               size="sm"
               className="bg-green-600 hover:bg-green-700"
             >
@@ -276,22 +267,22 @@ const TimerTab = () => {
             </Button>
           </div>
         </CardHeader>
-        <CardContent>
-          {showPresetForm && (
-            <div className="flex gap-2 mb-4">
-              <input
-                type="text"
-                value={newPresetName}
-                onChange={(e) => setNewPresetName(e.target.value)}
-                placeholder="Preset name"
+        <CardContent className="space-y-4">
+          {showAddPreset && (
+            <div className="flex space-x-2">
+              <Input
+                type="number"
+                value={newPreset}
+                onChange={(e) => setNewPreset(e.target.value)}
+                placeholder="Seconds"
                 className={cn(
-                  "flex-1 px-3 py-2 rounded border",
-                  "border-green-600 bg-gray-800 text-white"
+                  "border-gray-700",
+                  isDarkMode ? "bg-gray-800 text-white" : "bg-white text-black"
                 )}
               />
               <Button
                 onClick={addPreset}
-                size="sm" 
+                size="sm"
                 className="bg-green-600 hover:bg-green-700"
               >
                 Add
@@ -299,36 +290,32 @@ const TimerTab = () => {
             </div>
           )}
           
-          <div className="grid grid-cols-2 gap-2">
-            {presets.map((preset) => (
-              <div key={preset.id} className="flex items-center gap-2">
+          <div className="flex flex-col space-y-2">
+            {presets.map((seconds) => (
+              <div key={seconds} className="flex justify-between items-center">
                 <Button
-                  onClick={() => loadPreset(preset.seconds)}
-                  disabled={isRunning}
+                  onClick={() => setPresetTime(seconds)}
                   variant="outline"
-                  className="flex-1 border-green-600 text-green-400 hover:bg-green-600 hover:text-white"
+                  className={cn(
+                    "flex-1 mr-2 border-green-600 text-green-400 hover:bg-green-600 hover:text-white",
+                    isDarkMode ? "bg-gray-800" : "bg-white"
+                  )}
                 >
-                  {preset.name}
+                  {formatTime(seconds)}
                 </Button>
                 <Button
-                  onClick={() => deletePreset(preset.id)}
+                  onClick={() => removePreset(seconds)}
                   size="sm"
                   variant="outline"
                   className="border-red-600 text-red-400 hover:bg-red-600 hover:text-white"
                 >
-                  <Delete size={14} />
+                  <Trash2 size={16} />
                 </Button>
               </div>
             ))}
           </div>
         </CardContent>
       </Card>
-
-      {isRunning && (
-        <div className="text-center text-green-400 font-semibold animate-pulse">
-          Rest in progress... 💪
-        </div>
-      )}
     </div>
   );
 };

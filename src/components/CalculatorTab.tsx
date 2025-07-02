@@ -28,42 +28,46 @@ const CalculatorTab = () => {
 
   const weightUnit = isKg ? 'kg' : 'lbs';
 
+  const parseWeight = (value: string): number => {
+    return parseFloat(value.replace(',', '.')) || 0;
+  };
+
   const calculateOneRM = () => {
-    const w = parseFloat(weight);
+    const w = parseWeight(weight);
     const r = parseInt(reps);
-    const rpeValue = parseFloat(rpe);
+    const rpeValue = parseFloat(rpe.replace(',', '.'));
     
     if (!w || !r || r < 1) return;
 
     const results: OneRMResult[] = [];
     
-    // If RPE is provided, adjust the weight first
+    // RPE to percentage mapping (scientifically accurate)
+    const rpePercentages: { [key: number]: number } = {
+      10: 100, 9.5: 97, 9: 93, 8.5: 90, 8: 87, 
+      7.5: 83, 7: 80, 6.5: 77, 6: 73, 5.5: 70, 5: 67
+    };
+    
+    // Adjust weight based on RPE if provided
     let adjustedWeight = w;
-    if (rpeValue) {
-      // RPE to percentage mapping for accurate calculations
-      const rpePercentages: { [key: number]: number } = {
-        10: 100, 9.5: 97, 9: 93, 8.5: 90, 8: 87, 
-        7.5: 83, 7: 80, 6.5: 77, 6: 73, 5.5: 70, 5: 67
-      };
-      
-      const percentage = rpePercentages[rpeValue] || 70;
-      // Adjust weight to what it would be at RPE 10 (100%)
+    if (rpeValue && rpePercentages[rpeValue]) {
+      const percentage = rpePercentages[rpeValue];
+      // Convert RPE weight to what it would be at 100% effort
       adjustedWeight = w / (percentage / 100);
     }
     
-    // Epley Formula
+    // Epley Formula: 1RM = weight × (1 + reps/30)
     const epley = adjustedWeight * (1 + r / 30);
     results.push({ formula: 'Epley', result: Math.round(epley * 10) / 10 });
     
-    // Brzycki Formula
+    // Brzycki Formula: 1RM = weight / (1.0278 - 0.0278 × reps)
     const brzycki = adjustedWeight / (1.0278 - 0.0278 * r);
     results.push({ formula: 'Brzycki', result: Math.round(brzycki * 10) / 10 });
     
-    // McGlothin Formula
+    // McGlothin Formula: 1RM = (100 × weight) / (101.3 - 2.67123 × reps)
     const mcglothin = (100 * adjustedWeight) / (101.3 - 2.67123 * r);
     results.push({ formula: 'McGlothin', result: Math.round(mcglothin * 10) / 10 });
     
-    // Lombardi Formula
+    // Lombardi Formula: 1RM = weight × reps^0.10
     const lombardi = adjustedWeight * Math.pow(r, 0.10);
     results.push({ formula: 'Lombardi', result: Math.round(lombardi * 10) / 10 });
 
@@ -71,9 +75,9 @@ const CalculatorTab = () => {
   };
 
   const calculateRPEWeight = () => {
-    const oneRMValue = parseFloat(oneRM);
+    const oneRMValue = parseWeight(oneRM);
     const repsValue = parseInt(targetReps);
-    const rpeValue = parseFloat(targetRPE);
+    const rpeValue = parseFloat(targetRPE.replace(',', '.'));
     
     if (!oneRMValue || !repsValue || !rpeValue) return;
 
@@ -83,14 +87,13 @@ const CalculatorTab = () => {
       7.5: 83, 7: 80, 6.5: 77, 6: 73, 5.5: 70, 5: 67
     };
     
-    const percentage = rpePercentages[rpeValue] || 70;
+    const rpePercentage = rpePercentages[rpeValue] || 70;
     
-    // Calculate weight based on 1RM, target reps, and RPE
-    // First get the theoretical max for the rep range
-    const theoreticalMax = oneRMValue / (1 + repsValue / 30); // Using Epley formula in reverse
+    // Calculate theoretical max for the rep range using Epley formula
+    const theoreticalMax = oneRMValue / (1 + repsValue / 30);
     
-    // Then apply RPE percentage
-    const recommendedWeight = theoreticalMax * (percentage / 100);
+    // Apply RPE percentage to get working weight
+    const recommendedWeight = theoreticalMax * (rpePercentage / 100);
     
     setRpeResult(`${Math.round(recommendedWeight * 10) / 10} ${weightUnit}`);
   };
@@ -118,7 +121,7 @@ const CalculatorTab = () => {
               </Label>
               <Input
                 id="weight"
-                type="number"
+                type="text"
                 value={weight}
                 onChange={(e) => setWeight(e.target.value)}
                 className={cn(
@@ -214,6 +217,9 @@ const CalculatorTab = () => {
       )}>
         <CardHeader>
           <CardTitle className="text-blue-400">RPE Weight Calculator</CardTitle>
+          <p className={cn(isDarkMode ? "text-gray-400" : "text-gray-600", "text-sm")}>
+            Calculate working weight based on your 1RM, target reps, and desired RPE
+          </p>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-3 gap-4">
@@ -223,7 +229,7 @@ const CalculatorTab = () => {
               </Label>
               <Input
                 id="oneRM"
-                type="number"
+                type="text"
                 value={oneRM}
                 onChange={(e) => setOneRM(e.target.value)}
                 className={cn(

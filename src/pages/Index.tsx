@@ -1,14 +1,15 @@
 
 import React, { useState, createContext, useContext } from 'react';
 import { cn } from '@/lib/utils';
-import { Pill, Calculator, Timer, Weight, Settings } from 'lucide-react';
+import { Pill, Calculator, Timer, Weight, Settings, Scale } from 'lucide-react';
 import SupplementsTab from '@/components/SupplementsTab';
 import CalculatorTab from '@/components/CalculatorTab';
 import TimerTab from '@/components/TimerTab';
 import PlateCalculatorTab from '@/components/PlateCalculatorTab';
+import UnitConverterTab from '@/components/UnitConverterTab';
 import SettingsModal from '@/components/SettingsModal';
 
-type TabType = 'supplements' | 'calculator' | 'timer' | 'platecalculator';
+type TabType = 'supplements' | 'calculator' | 'timer' | 'platecalculator' | 'unitconverter';
 
 interface AppSettings {
   isDarkMode: boolean;
@@ -40,6 +41,8 @@ const Index = () => {
         return <TimerTab />;
       case 'platecalculator':
         return <PlateCalculatorTab />;
+      case 'unitconverter':
+        return <UnitConverterTab />;
       default:
         return <SupplementsTab />;
     }
@@ -55,6 +58,8 @@ const Index = () => {
         return 'text-green-400';
       case 'platecalculator':
         return 'text-orange-400';
+      case 'unitconverter':
+        return 'text-cyan-400';
       default:
         return 'text-purple-400';
     }
@@ -70,6 +75,8 @@ const Index = () => {
         return 'bg-green-400';
       case 'platecalculator':
         return 'bg-orange-400';
+      case 'unitconverter':
+        return 'bg-cyan-400';
       default:
         return 'bg-purple-400';
     }
@@ -100,7 +107,7 @@ const Index = () => {
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 overflow-auto pb-20">
+        <div className="flex-1 overflow-auto pb-24">
           {renderActiveTab()}
         </div>
 
@@ -116,53 +123,66 @@ const Index = () => {
             <button
               onClick={() => setActiveTab('supplements')}
               className={cn(
-                "flex flex-col items-center py-2 px-4 rounded-lg transition-colors",
+                "flex flex-col items-center py-2 px-2 rounded-lg transition-colors text-xs",
                 activeTab === 'supplements' 
                   ? "bg-purple-600 text-white" 
                   : "text-gray-400 hover:text-white"
               )}
             >
-              <Pill size={20} />
-              <span className="text-xs mt-1">Supplements</span>
+              <Pill size={18} />
+              <span className="mt-1">Supplements</span>
             </button>
             
             <button
               onClick={() => setActiveTab('calculator')}
               className={cn(
-                "flex flex-col items-center py-2 px-4 rounded-lg transition-colors",
+                "flex flex-col items-center py-2 px-2 rounded-lg transition-colors text-xs",
                 activeTab === 'calculator' 
                   ? "bg-blue-600 text-white" 
                   : "text-gray-400 hover:text-white"
               )}
             >
-              <Calculator size={20} />
-              <span className="text-xs mt-1">Calculator</span>
+              <Calculator size={18} />
+              <span className="mt-1">Calculator</span>
             </button>
             
             <button
               onClick={() => setActiveTab('timer')}
               className={cn(
-                "flex flex-col items-center py-2 px-4 rounded-lg transition-colors",
+                "flex flex-col items-center py-2 px-2 rounded-lg transition-colors text-xs",
                 activeTab === 'timer' 
                   ? "bg-green-600 text-white" 
                   : "text-gray-400 hover:text-white"
               )}
             >
-              <Timer size={20} />
-              <span className="text-xs mt-1">Rest Timer</span>
+              <Timer size={18} />
+              <span className="mt-1">Rest Timer</span>
             </button>
             
             <button
               onClick={() => setActiveTab('platecalculator')}
               className={cn(
-                "flex flex-col items-center py-2 px-4 rounded-lg transition-colors",
+                "flex flex-col items-center py-2 px-2 rounded-lg transition-colors text-xs",
                 activeTab === 'platecalculator' 
                   ? "bg-orange-600 text-white" 
                   : "text-gray-400 hover:text-white"
               )}
             >
-              <Weight size={20} />
-              <span className="text-xs mt-1">Plates</span>
+              <Weight size={18} />
+              <span className="mt-1">Plates</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('unitconverter')}
+              className={cn(
+                "flex flex-col items-center py-2 px-2 rounded-lg transition-colors text-xs",
+                activeTab === 'unitconverter' 
+                  ? "bg-cyan-600 text-white" 
+                  : "text-gray-400 hover:text-white"
+              )}
+            >
+              <Scale size={18} />
+              <span className="mt-1">Converter</span>
             </button>
           </div>
         </div>

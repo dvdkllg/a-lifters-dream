@@ -1,42 +1,119 @@
 
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { SettingsContext } from '@/pages/Index';
+import { cn } from '@/lib/utils';
+import { ArrowLeftRight, Minus } from 'lucide-react';
+
+interface PlateInfo {
+  weight: number;
+  count: number;
+  available: number;
+  color: string;
+}
 
 interface PlateCalculation {
   plate: number;
   count: number;
+  color: string;
 }
 
 const PlateCalculatorTab = () => {
+  const { isDarkMode, isKg } = useContext(SettingsContext);
   const [targetWeight, setTargetWeight] = useState('');
-  const [barWeight, setBarWeight] = useState(45);
+  const [barWeight, setBarWeight] = useState(isKg ? 20 : 45);
   const [plates, setPlates] = useState<PlateCalculation[]>([]);
+  const [isReverse, setIsReverse] = useState(false);
+  const [loadedPlates, setLoadedPlates] = useState<{ [key: number]: number }>({});
+  const [reverseResult, setReverseResult] = useState('');
 
-  const availablePlates = [45, 35, 25, 10, 5, 2.5];
+  const weightUnit = isKg ? 'kg' : 'lbs';
+
+  const getPlateColor = (weight: number): string => {
+    if (isKg) {
+      switch (weight) {
+        case 25: return 'bg-red-500';
+        case 20: return 'bg-blue-500';
+        case 15: return 'bg-yellow-500';
+        case 10: return 'bg-green-500';
+        case 5: return 'bg-gray-100 border-2 border-gray-400';
+        case 2.5: return 'bg-black';
+        default: return 'bg-gray-100 border-2 border-gray-400';
+      }
+    } else {
+      switch (weight) {
+        case 55: return 'bg-red-500';
+        case 45: return 'bg-blue-500';
+        case 35: return 'bg-yellow-500';
+        case 25: return 'bg-green-500';
+        case 10: return 'bg-gray-100 border-2 border-gray-400';
+        case 5: return 'bg-gray-100 border-2 border-gray-400';
+        case 2.5: return 'bg-black';
+        default: return 'bg-gray-100 border-2 border-gray-400';
+      }
+    }
+  };
+
+  const availablePlates = isKg 
+    ? [25, 20, 15, 10, 5, 2.5, 1.25].map(weight => ({
+        weight,
+        count: 0,
+        available: 10,
+        color: getPlateColor(weight)
+      }))
+    : [55, 45, 35, 25, 10, 5, 2.5].map(weight => ({
+        weight,
+        count: 0,
+        available: 10,
+        color: getPlateColor(weight)
+      }));
+
+  const parseWeight = (value: string): number => {
+    return parseFloat(value.replace(',', '.')) || 0;
+  };
 
   const calculatePlates = () => {
-    const target = parseFloat(targetWeight);
+    const target = parseWeight(targetWeight);
     if (!target || target <= barWeight) {
       setPlates([]);
       return;
     }
 
-    const weightToLoad = (target - barWeight) / 2; // Half for one side
+    const weightToLoad = (target - barWeight) / 2;
     let remainingWeight = weightToLoad;
     const neededPlates: PlateCalculation[] = [];
 
-    for (const plateWeight of availablePlates) {
-      const count = Math.floor(remainingWeight / plateWeight);
+    for (const plateInfo of availablePlates) {
+      const count = Math.floor(remainingWeight / plateInfo.weight);
       if (count > 0) {
-        neededPlates.push({ plate: plateWeight, count });
-        remainingWeight -= count * plateWeight;
+        neededPlates.push({ 
+          plate: plateInfo.weight, 
+          count, 
+          color: plateInfo.color 
+        });
+        remainingWeight -= count * plateInfo.weight;
+        remainingWeight = Math.round(remainingWeight * 1000) / 1000; // Handle floating point precision
       }
     }
 
     setPlates(neededPlates);
+  };
+
+  const calculateReverse = () => {
+    const totalPlateWeight = Object.entries(loadedPlates).reduce((sum, [weight, count]) => {
+      return sum + (parseFloat(weight) * count);
+    }, 0);
+    const total = barWeight + (totalPlateWeight * 2);
+    setReverseResult(`${total} ${weightUnit}`);
+  };
+
+  const emptyBar = () => {
+    setLoadedPlates({});
+    setReverseResult(`${barWeight} ${weightUnit}`);
   };
 
   const getTotalWeight = () => {
@@ -44,84 +121,271 @@ const PlateCalculatorTab = () => {
     return barWeight + (plateWeight * 2);
   };
 
+  const PlateVisualization = ({ plateList }: { plateList: PlateCalculation[] }) => (
+    <div className="flex items-center justify-center my-4 overflow-x-auto">
+      <div className="flex items-center space-x-1">
+        {/* Left plates */}
+        <div className="flex">
+          {plateList.map((plate, index) => (
+            Array.from({ length: plate.count }).map((_, i) => (
+              <div
+                key={`left-${index}-${i}`}
+                className={cn(
+                  "w-4 h-12 rounded-sm mr-0.5 flex items-center justify-center text-xs font-bold",
+                  plate.color,
+                  plate.weight === 2.5 || plate.weight === 1.25 ? "text-white" : "text-black"
+                )}
+              >
+                {plate.weight}
+              </div>
+            ))
+          ))}
+        </div>
+        
+        {/* Barbell */}
+        <div className="w-20 h-2 bg-gray-600 mx-2 rounded"></div>
+        
+        {/* Right plates */}
+        <div className="flex">
+          {plateList.map((plate, index) => (
+            Array.from({ length: plate.count }).map((_, i) => (
+              <div
+                key={`right-${index}-${i}`}
+                className={cn(
+                  "w-4 h-12 rounded-sm ml-0.5 flex items-center justify-center text-xs font-bold",
+                  plate.color,
+                  plate.weight === 2.5 || plate.weight === 1.25 ? "text-white" : "text-black"
+                )}
+              >
+                {plate.weight}
+              </div>
+            ))
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
   return (
-    <div className="p-4 space-y-6 bg-black min-h-full">
+    <div className={cn(
+      "p-4 space-y-6 min-h-full",
+      isDarkMode ? "bg-black" : "bg-white"
+    )}>
       <h2 className="text-2xl font-bold text-center text-orange-400">Plate Calculator</h2>
       
-      {/* Input Section */}
-      <Card className="bg-gray-900 border-orange-800">
-        <CardHeader>
-          <CardTitle className="text-orange-400">Setup</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Label htmlFor="barWeight" className="text-gray-300">Bar Weight (lbs)</Label>
-            <Input
-              id="barWeight"
-              type="number"
-              value={barWeight}
-              onChange={(e) => setBarWeight(parseFloat(e.target.value) || 45)}
-              className="bg-gray-800 border-gray-700 text-white"
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor="targetWeight" className="text-gray-300">Target Weight (lbs)</Label>
-            <Input
-              id="targetWeight"
-              type="number"
-              value={targetWeight}
-              onChange={(e) => setTargetWeight(e.target.value)}
-              className="bg-gray-800 border-gray-700 text-white"
-              placeholder="Enter total weight"
-            />
-          </div>
-          
-          <Button
-            onClick={calculatePlates}
-            className="w-full bg-orange-600 hover:bg-orange-700"
-          >
-            Calculate Plates
-          </Button>
-        </CardContent>
-      </Card>
+      {/* Mode Toggle */}
+      <div className="flex justify-center">
+        <Button
+          onClick={() => setIsReverse(!isReverse)}
+          variant="outline"
+          className={cn(
+            "border-orange-600 text-orange-400 hover:bg-orange-600 hover:text-white",
+            isDarkMode ? "bg-gray-900" : "bg-white"
+          )}
+        >
+          <ArrowLeftRight size={16} className="mr-2" />
+          {isReverse ? 'Weight Calculator' : 'Reverse Calculator'}
+        </Button>
+      </div>
 
-      {/* Results */}
-      {plates.length > 0 && (
-        <Card className="bg-gray-900 border-orange-800">
-          <CardHeader>
-            <CardTitle className="text-orange-400">Plates per Side</CardTitle>
-            <p className="text-gray-400">Total weight: {getTotalWeight()} lbs</p>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {plates.map((plate, index) => (
-                <div key={index} className="flex justify-between items-center bg-gray-800 p-3 rounded-lg">
-                  <span className="text-white font-semibold">{plate.plate} lbs</span>
-                  <span className="text-orange-400 font-bold">x{plate.count}</span>
+      {!isReverse ? (
+        <>
+          {/* Standard Calculator */}
+          <Card className={cn(
+            "border-orange-800",
+            isDarkMode ? "bg-gray-900" : "bg-gray-100"
+          )}>
+            <CardHeader>
+              <CardTitle className="text-orange-400">Calculate Plates</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="barWeight" className={cn(isDarkMode ? "text-gray-300" : "text-gray-700")}>
+                    Bar Weight ({weightUnit})
+                  </Label>
+                  <Select value={barWeight.toString()} onValueChange={(value) => setBarWeight(parseFloat(value))}>
+                    <SelectTrigger className={cn(
+                      "border-gray-700",
+                      isDarkMode ? "bg-gray-800 text-white" : "bg-white text-black"
+                    )}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={cn(
+                      "border-gray-700",
+                      isDarkMode ? "bg-gray-800" : "bg-white"
+                    )}>
+                      {isKg ? (
+                        <>
+                          <SelectItem value="20">Olympic Bar (20 kg)</SelectItem>
+                          <SelectItem value="15">Women's Bar (15 kg)</SelectItem>
+                          <SelectItem value="10">EZ Bar (10 kg)</SelectItem>
+                          <SelectItem value="7">Short Bar (7 kg)</SelectItem>
+                        </>
+                      ) : (
+                        <>
+                          <SelectItem value="45">Olympic Bar (45 lbs)</SelectItem>
+                          <SelectItem value="35">Women's Bar (35 lbs)</SelectItem>
+                          <SelectItem value="25">EZ Bar (25 lbs)</SelectItem>
+                          <SelectItem value="15">Short Bar (15 lbs)</SelectItem>
+                        </>
+                      )}
+                    </SelectContent>
+                  </Select>
                 </div>
-              ))}
-            </div>
-            
-            <div className="mt-4 p-3 bg-gray-800 rounded-lg">
-              <p className="text-sm text-gray-400">
-                Load plates from heaviest to lightest on each side of the bar
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+                
+                <div>
+                  <Label htmlFor="targetWeight" className={cn(isDarkMode ? "text-gray-300" : "text-gray-700")}>
+                    Target Weight ({weightUnit})
+                  </Label>
+                  <Input
+                    id="targetWeight"
+                    type="text"
+                    value={targetWeight}
+                    onChange={(e) => setTargetWeight(e.target.value)}
+                    className={cn(
+                      "border-gray-700",
+                      isDarkMode ? "bg-gray-800 text-white" : "bg-white text-black"
+                    )}
+                    placeholder="Enter total weight"
+                  />
+                </div>
+              </div>
+              
+              <div className="flex space-x-2">
+                <Button
+                  onClick={calculatePlates}
+                  className="flex-1 bg-orange-600 hover:bg-orange-700"
+                >
+                  Calculate Plates
+                </Button>
+                <Button
+                  onClick={() => {
+                    setTargetWeight(barWeight.toString());
+                    setPlates([]);
+                  }}
+                  variant="outline"
+                  className="border-orange-600 text-orange-400 hover:bg-orange-600 hover:text-white"
+                >
+                  <Minus size={16} className="mr-1" />
+                  Empty Bar
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
 
-      {targetWeight && plates.length === 0 && parseFloat(targetWeight) > 0 && (
-        <Card className="bg-gray-900 border-gray-700">
-          <CardContent className="p-4">
-            <p className="text-gray-400 text-center">
-              {parseFloat(targetWeight) <= barWeight 
-                ? "Target weight must be greater than bar weight" 
-                : "No calculation available"}
-            </p>
-          </CardContent>
-        </Card>
+          {/* Results */}
+          {plates.length > 0 && (
+            <Card className={cn(
+              "border-orange-800",
+              isDarkMode ? "bg-gray-900" : "bg-gray-100"
+            )}>
+              <CardHeader>
+                <CardTitle className="text-orange-400">Plates per Side</CardTitle>
+                <p className={cn(isDarkMode ? "text-gray-400" : "text-gray-600")}>
+                  Total weight: {getTotalWeight()} {weightUnit}
+                </p>
+              </CardHeader>
+              <CardContent>
+                <PlateVisualization plateList={plates} />
+                
+                <div className="space-y-3 mt-4">
+                  {plates.map((plate, index) => (
+                    <div key={index} className={cn(
+                      "flex justify-between items-center p-3 rounded-lg",
+                      isDarkMode ? "bg-gray-800" : "bg-gray-200"
+                    )}>
+                      <div className="flex items-center space-x-3">
+                        <div className={cn("w-4 h-4 rounded-sm", plate.color)}></div>
+                        <span className={cn(isDarkMode ? "text-white" : "text-black", "font-semibold")}>
+                          {plate.plate} {weightUnit}
+                        </span>
+                      </div>
+                      <span className="text-orange-400 font-bold">x{plate.count}</span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </>
+      ) : (
+        <>
+          {/* Reverse Calculator */}
+          <Card className={cn(
+            "border-orange-800",
+            isDarkMode ? "bg-gray-900" : "bg-gray-100"
+          )}>
+            <CardHeader>
+              <CardTitle className="text-orange-400">Reverse Calculator</CardTitle>
+              <p className={cn(isDarkMode ? "text-gray-400" : "text-gray-600")}>
+                Enter loaded plates to calculate total weight
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label className={cn(isDarkMode ? "text-gray-300" : "text-gray-700")}>
+                  Bar Weight: {barWeight} {weightUnit}
+                </Label>
+              </div>
+              
+              <div className="space-y-3">
+                <Label className={cn(isDarkMode ? "text-gray-300" : "text-gray-700")}>
+                  Plates per Side:
+                </Label>
+                {availablePlates.map((plate) => (
+                  <div key={plate.weight} className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className={cn("w-4 h-4 rounded-sm", plate.color)}></div>
+                      <span className={cn(isDarkMode ? "text-white" : "text-black")}>
+                        {plate.weight} {weightUnit}
+                      </span>
+                    </div>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="10"
+                      value={loadedPlates[plate.weight] || 0}
+                      onChange={(e) => setLoadedPlates(prev => ({
+                        ...prev,
+                        [plate.weight]: parseInt(e.target.value) || 0
+                      }))}
+                      className={cn(
+                        "w-20 border-gray-700",
+                        isDarkMode ? "bg-gray-800 text-white" : "bg-white text-black"
+                      )}
+                    />
+                  </div>
+                ))}
+              </div>
+              
+              <div className="flex space-x-2">
+                <Button
+                  onClick={calculateReverse}
+                  className="flex-1 bg-orange-600 hover:bg-orange-700"
+                >
+                  Calculate Total
+                </Button>
+                <Button
+                  onClick={emptyBar}
+                  variant="outline"
+                  className="border-orange-600 text-orange-400 hover:bg-orange-600 hover:text-white"
+                >
+                  Empty Bar
+                </Button>
+              </div>
+              
+              {reverseResult && (
+                <div className={cn(
+                  "p-3 rounded text-center font-bold text-lg",
+                  isDarkMode ? "bg-gray-800 text-orange-400" : "bg-gray-200 text-orange-600"
+                )}>
+                  Total Weight: {reverseResult}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </>
       )}
     </div>
   );
