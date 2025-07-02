@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SettingsContext } from '@/pages/Index';
 import { cn } from '@/lib/utils';
-import { ArrowLeftRight, Minus } from 'lucide-react';
+import { ArrowLeftRight, Minus, Settings } from 'lucide-react';
 
 interface PlateInfo {
   weight: number;
@@ -30,11 +30,27 @@ const PlateCalculatorTab = () => {
   const [isReverse, setIsReverse] = useState(false);
   const [loadedPlates, setLoadedPlates] = useState<{ [key: number]: number }>({});
   const [reverseResult, setReverseResult] = useState('');
+  const [availablePlates, setAvailablePlates] = useState<PlateInfo[]>(
+    isKg 
+      ? [25, 20, 15, 10, 5, 2.5, 1.25].map(weight => ({
+          weight,
+          count: 0,
+          available: 10,
+          color: getPlateColor(weight, true)
+        }))
+      : [55, 45, 35, 25, 10, 5, 2.5].map(weight => ({
+          weight,
+          count: 0,
+          available: 10,
+          color: getPlateColor(weight, false)
+        }))
+  );
+  const [showPlateManager, setShowPlateManager] = useState(false);
 
   const weightUnit = isKg ? 'kg' : 'lbs';
 
-  const getPlateColor = (weight: number): string => {
-    if (isKg) {
+  function getPlateColor(weight: number, isKgSystem: boolean): string {
+    if (isKgSystem) {
       switch (weight) {
         case 25: return 'bg-red-500';
         case 20: return 'bg-blue-500';
@@ -56,21 +72,7 @@ const PlateCalculatorTab = () => {
         default: return 'bg-gray-100 border-2 border-gray-400';
       }
     }
-  };
-
-  const availablePlates = isKg 
-    ? [25, 20, 15, 10, 5, 2.5, 1.25].map(weight => ({
-        weight,
-        count: 0,
-        available: 10,
-        color: getPlateColor(weight)
-      }))
-    : [55, 45, 35, 25, 10, 5, 2.5].map(weight => ({
-        weight,
-        count: 0,
-        available: 10,
-        color: getPlateColor(weight)
-      }));
+  }
 
   const parseWeight = (value: string): number => {
     return parseFloat(value.replace(',', '.')) || 0;
@@ -87,16 +89,25 @@ const PlateCalculatorTab = () => {
     let remainingWeight = weightToLoad;
     const neededPlates: PlateCalculation[] = [];
 
-    for (const plateInfo of availablePlates) {
-      const count = Math.floor(remainingWeight / plateInfo.weight);
-      if (count > 0) {
+    // Use only available plates with available count > 0
+    const usablePlates = availablePlates
+      .filter(p => p.available > 0)
+      .sort((a, b) => b.weight - a.weight);
+
+    for (const plateInfo of usablePlates) {
+      const maxCount = Math.min(
+        Math.floor(remainingWeight / plateInfo.weight),
+        plateInfo.available
+      );
+      
+      if (maxCount > 0) {
         neededPlates.push({ 
           plate: plateInfo.weight, 
-          count, 
+          count: maxCount, 
           color: plateInfo.color 
         });
-        remainingWeight -= count * plateInfo.weight;
-        remainingWeight = Math.round(remainingWeight * 1000) / 1000; // Handle floating point precision
+        remainingWeight -= maxCount * plateInfo.weight;
+        remainingWeight = Math.round(remainingWeight * 1000) / 1000;
       }
     }
 
@@ -119,6 +130,16 @@ const PlateCalculatorTab = () => {
   const getTotalWeight = () => {
     const plateWeight = plates.reduce((sum, p) => sum + (p.plate * p.count), 0);
     return barWeight + (plateWeight * 2);
+  };
+
+  const getClosestWeight = () => {
+    if (plates.length === 0) return null;
+    const actualWeight = getTotalWeight();
+    const targetWeightNum = parseWeight(targetWeight);
+    if (actualWeight !== targetWeightNum) {
+      return actualWeight;
+    }
+    return null;
   };
 
   const PlateVisualization = ({ plateList }: { plateList: PlateCalculation[] }) => (
@@ -173,8 +194,8 @@ const PlateCalculatorTab = () => {
     )}>
       <h2 className="text-2xl font-bold text-center text-orange-400">Plate Calculator</h2>
       
-      {/* Mode Toggle */}
-      <div className="flex justify-center">
+      {/* Mode Toggle and Plate Manager */}
+      <div className="flex justify-center space-x-2">
         <Button
           onClick={() => setIsReverse(!isReverse)}
           variant="outline"
@@ -186,7 +207,58 @@ const PlateCalculatorTab = () => {
           <ArrowLeftRight size={16} className="mr-2" />
           {isReverse ? 'Weight Calculator' : 'Reverse Calculator'}
         </Button>
+        
+        <Button
+          onClick={() => setShowPlateManager(!showPlateManager)}
+          variant="outline"
+          className={cn(
+            "border-orange-600 text-orange-400 hover:bg-orange-600 hover:text-white",
+            isDarkMode ? "bg-gray-900" : "bg-white"
+          )}
+        >
+          <Settings size={16} className="mr-2" />
+          Manage Plates
+        </Button>
       </div>
+
+      {/* Plate Manager */}
+      {showPlateManager && (
+        <Card className={cn(
+          "border-orange-800",
+          isDarkMode ? "bg-gray-900" : "bg-gray-100"
+        )}>
+          <CardHeader>
+            <CardTitle className="text-orange-400">Manage Available Plates</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {availablePlates.map((plate, index) => (
+              <div key={plate.weight} className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className={cn("w-4 h-4 rounded-sm", plate.color)}></div>
+                  <span className={cn(isDarkMode ? "text-white" : "text-black")}>
+                    {plate.weight} {weightUnit}
+                  </span>
+                </div>
+                <Input
+                  type="number"
+                  min="0"
+                  max="20"
+                  value={plate.available}
+                  onChange={(e) => {
+                    const newPlates = [...availablePlates];
+                    newPlates[index].available = parseInt(e.target.value) || 0;
+                    setAvailablePlates(newPlates);
+                  }}
+                  className={cn(
+                    "w-20 border-gray-700",
+                    isDarkMode ? "bg-gray-800 text-white" : "bg-white text-black"
+                  )}
+                />
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       {!isReverse ? (
         <>
@@ -284,6 +356,11 @@ const PlateCalculatorTab = () => {
                 <CardTitle className="text-orange-400">Plates per Side</CardTitle>
                 <p className={cn(isDarkMode ? "text-gray-400" : "text-gray-600")}>
                   Total weight: {getTotalWeight()} {weightUnit}
+                  {getClosestWeight() && (
+                    <span className="text-yellow-500 ml-2">
+                      (Closest possible: {getClosestWeight()} {weightUnit})
+                    </span>
+                  )}
                 </p>
               </CardHeader>
               <CardContent>
@@ -383,8 +460,8 @@ const PlateCalculatorTab = () => {
                   Total Weight: {reverseResult}
                 </div>
               )}
-            </Card>
-          </div>
+            </CardContent>
+          </Card>
         </>
       )}
     </div>
