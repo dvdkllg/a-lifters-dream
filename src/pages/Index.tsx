@@ -78,7 +78,10 @@ const Index = () => {
         )}>
           <div className="flex justify-between items-center">
             <button
-              className="flex items-center space-x-2 p-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+              className={cn(
+                "flex items-center space-x-2 p-2 rounded-lg transition-colors",
+                isDarkMode ? "bg-gray-800 hover:bg-gray-700 text-gray-300" : "bg-gray-200 hover:bg-gray-300 text-gray-700"
+              )}
             >
               <User size={20} />
             </button>
