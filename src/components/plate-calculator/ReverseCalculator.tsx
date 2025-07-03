@@ -3,6 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { PlateInfo } from './types';
 
@@ -16,6 +17,7 @@ interface ReverseCalculatorProps {
   reverseResult: string;
   isDarkMode: boolean;
   isKg: boolean;
+  setBarWeight: (weight: number) => void;
 }
 
 const ReverseCalculator: React.FC<ReverseCalculatorProps> = ({
@@ -27,8 +29,13 @@ const ReverseCalculator: React.FC<ReverseCalculatorProps> = ({
   emptyBar,
   reverseResult,
   isDarkMode,
-  isKg
+  isKg,
+  setBarWeight
 }) => {
+  const barOptions = isKg 
+    ? [{ value: 20, label: '20kg Olympic Bar' }, { value: 15, label: '15kg Women\'s Bar' }]
+    : [{ value: 45, label: '45lbs Olympic Bar' }, { value: 35, label: '35lbs Women\'s Bar' }];
+
   return (
     <Card className={cn(
       "border-orange-800",
@@ -41,10 +48,34 @@ const ReverseCalculator: React.FC<ReverseCalculatorProps> = ({
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div>
+        <div className="space-y-2">
           <Label className={cn(isDarkMode ? "text-gray-300" : "text-gray-700")}>
-            Bar Weight: {barWeight} {isKg ? 'kg' : 'lbs'}
+            Bar Type:
           </Label>
+          <Select value={barWeight.toString()} onValueChange={(value) => setBarWeight(Number(value))}>
+            <SelectTrigger className={cn(
+              "border-orange-600",
+              isDarkMode ? "bg-gray-800 text-white" : "bg-white text-black"
+            )}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className={cn(
+              "z-50",
+              isDarkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
+            )}>
+              {barOptions.map((option) => (
+                <SelectItem 
+                  key={option.value} 
+                  value={option.value.toString()}
+                  className={cn(
+                    isDarkMode ? "text-white hover:bg-gray-700" : "text-black hover:bg-gray-100"
+                  )}
+                >
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         
         <div className="space-y-4">

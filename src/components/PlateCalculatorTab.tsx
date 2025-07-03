@@ -1,4 +1,3 @@
-
 import React, { useState, useContext, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -198,6 +197,38 @@ const PlateCalculatorTab = () => {
     return <PlateVisualization plateList={reversePlates} />;
   };
 
+  // Update plates and bar weight when unit changes
+  useEffect(() => {
+    const newPlates = isKg 
+      ? [25, 20, 15, 10, 5, 2.5, 1.25].map(weight => ({
+          weight,
+          count: 0,
+          available: 10,
+          color: getPlateColor(weight, true)
+        }))
+      : [55, 45, 35, 25, 10, 5, 2.5].map(weight => ({
+          weight,
+          count: 0,
+          available: 10,
+          color: getPlateColor(weight, false)
+        }));
+    
+    setAvailablePlates(newPlates);
+    setBarWeight(isKg ? 20 : 45);
+    setLoadedPlates({});
+    setReverseResult(`${isKg ? 20 : 45} ${isKg ? 'kg' : 'lbs'}`);
+    setPlates([]);
+  }, [isKg]);
+
+  // Initialize reverse result on component mount
+  useEffect(() => {
+    if (reverseResult === '') {
+      setReverseResult(`${barWeight} ${isKg ? 'kg' : 'lbs'}`);
+    }
+  }, [barWeight, isKg, reverseResult]);
+
+  const weightUnit = isKg ? 'kg' : 'lbs';
+
   return (
     <div className={cn(
       "p-4 space-y-6 min-h-full",
@@ -222,6 +253,44 @@ const PlateCalculatorTab = () => {
           >
             <Settings size={16} />
           </Button>
+        </div>
+      </div>
+
+      {/* Calculator Mode Toggle Slider */}
+      <div className="flex justify-center">
+        <div className={cn(
+          "relative inline-flex rounded-full p-1 transition-colors",
+          isDarkMode ? "bg-gray-800" : "bg-gray-200"
+        )}>
+          <div
+            className={cn(
+              "absolute top-1 bottom-1 w-1/2 rounded-full transition-transform duration-200 ease-in-out",
+              "bg-orange-400 shadow-sm",
+              isReverse ? "translate-x-full" : "translate-x-0"
+            )}
+          />
+          <button
+            onClick={() => setIsReverse(false)}
+            className={cn(
+              "relative z-10 px-6 py-2 text-sm font-medium rounded-full transition-colors",
+              !isReverse 
+                ? "text-white" 
+                : isDarkMode ? "text-gray-300 hover:text-white" : "text-gray-600 hover:text-gray-800"
+            )}
+          >
+            Weight Calculator
+          </button>
+          <button
+            onClick={() => setIsReverse(true)}
+            className={cn(
+              "relative z-10 px-6 py-2 text-sm font-medium rounded-full transition-colors",
+              isReverse 
+                ? "text-white" 
+                : isDarkMode ? "text-gray-300 hover:text-white" : "text-gray-600 hover:text-gray-800"
+            )}
+          >
+            Reverse Calculator
+          </button>
         </div>
       </div>
 
@@ -255,21 +324,6 @@ const PlateCalculatorTab = () => {
           isKg={isKg}
         />
       )}
-
-      {/* Mode Toggle */}
-      <div className="flex justify-center">
-        <Button
-          onClick={() => setIsReverse(!isReverse)}
-          variant="outline"
-          className={cn(
-            "border-orange-600 text-orange-400 hover:bg-orange-600 hover:text-white",
-            isDarkMode ? "bg-gray-900" : "bg-white"
-          )}
-        >
-          <ArrowLeftRight size={16} className="mr-2" />
-          {isReverse ? 'Weight Calculator' : 'Reverse Calculator'}
-        </Button>
-      </div>
 
       {!isReverse ? (
         <>
@@ -333,6 +387,7 @@ const PlateCalculatorTab = () => {
           reverseResult={reverseResult}
           isDarkMode={isDarkMode}
           isKg={isKg}
+          setBarWeight={setBarWeight}
         />
       )}
     </div>
