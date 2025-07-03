@@ -25,6 +25,19 @@ const PlateVisualization: React.FC<PlateVisualizationProps> = ({ plateList }) =>
     if (weight >= 5 || weight >= 10) return 'h-8';   // Small plates
     return 'h-6'; // Smallest plates
   };
+
+  const getTextColor = (plateColor: string) => {
+    // If plate color contains 'white' or 'gray-100', use black text
+    if (plateColor.includes('bg-white') || plateColor.includes('bg-gray-100')) {
+      return 'text-black';
+    }
+    // For dark plates (2.5kg, 1.25kg typically have dark colors), use white text
+    if (plateColor.includes('bg-gray-800') || plateColor.includes('bg-black') || plateColor.includes('bg-red-800')) {
+      return 'text-white';
+    }
+    // Default to black text for most colored plates
+    return 'text-black';
+  };
   
   return (
     <div className="flex items-center justify-center my-6 overflow-x-auto">
@@ -40,7 +53,7 @@ const PlateVisualization: React.FC<PlateVisualizationProps> = ({ plateList }) =>
                   getPlateWidth(plate.plate),
                   getPlateHeight(plate.plate),
                   plate.color,
-                  plate.plate === 2.5 || plate.plate === 1.25 ? "text-white" : "text-black"
+                  getTextColor(plate.color)
                 )}
                 style={{ 
                   zIndex: 100 - plateIndex - i,
@@ -82,7 +95,7 @@ const PlateVisualization: React.FC<PlateVisualizationProps> = ({ plateList }) =>
                   getPlateWidth(plate.plate),
                   getPlateHeight(plate.plate),
                   plate.color,
-                  plate.plate === 2.5 || plate.plate === 1.25 ? "text-white" : "text-black"
+                  getTextColor(plate.color)
                 )}
                 style={{ 
                   zIndex: 100 - plateIndex - i,

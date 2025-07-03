@@ -15,6 +15,11 @@ import PlateCalculatorSettings from './PlateCalculatorSettings';
 import { PlateInfo, PlateCalculation } from './plate-calculator/types';
 import { getPlateColor } from './plate-calculator/utils';
 
+interface BarInfo {
+  weight: number;
+  label: string;
+}
+
 const PlateCalculatorTab = () => {
   const { isDarkMode, isKg } = useContext(SettingsContext);
   const [targetWeight, setTargetWeight] = useState('');
@@ -32,8 +37,12 @@ const PlateCalculatorTab = () => {
       color: getPlateColor(weight, true)
     }))
   );
+  const [availableBars, setAvailableBars] = useState<BarInfo[]>([
+    { weight: 20, label: '20kg Olympic Bar' },
+    { weight: 15, label: '15kg Women\'s Bar' }
+  ]);
 
-  // Update plates and bar weight when unit changes
+  // Update plates and bars when unit changes
   useEffect(() => {
     const newPlates = isKg 
       ? [25, 20, 15, 10, 5, 2.5, 1.25].map(weight => ({
@@ -49,7 +58,18 @@ const PlateCalculatorTab = () => {
           color: getPlateColor(weight, false)
         }));
     
+    const newBars = isKg 
+      ? [
+          { weight: 20, label: '20kg Olympic Bar' },
+          { weight: 15, label: '15kg Women\'s Bar' }
+        ]
+      : [
+          { weight: 45, label: '45lbs Olympic Bar' },
+          { weight: 35, label: '35lbs Women\'s Bar' }
+        ];
+    
     setAvailablePlates(newPlates);
+    setAvailableBars(newBars);
     setBarWeight(isKg ? 20 : 45);
     setLoadedPlates({});
     setReverseResult(`${isKg ? 20 : 45} ${isKg ? 'kg' : 'lbs'}`);
@@ -62,8 +82,6 @@ const PlateCalculatorTab = () => {
       setReverseResult(`${barWeight} ${isKg ? 'kg' : 'lbs'}`);
     }
   }, [barWeight, isKg, reverseResult]);
-
-  const weightUnit = isKg ? 'kg' : 'lbs';
 
   const parseWeight = (value: string): number => {
     return parseFloat(value.replace(',', '.')) || 0;
@@ -105,17 +123,9 @@ const PlateCalculatorTab = () => {
     setPlates(neededPlates);
   };
 
-  const calculateReverse = () => {
-    const totalPlateWeight = Object.entries(loadedPlates).reduce((sum, [weight, count]) => {
-      return sum + (parseFloat(weight) * Number(count));
-    }, 0);
-    const total = barWeight + (totalPlateWeight * 2);
-    setReverseResult(`${total} ${weightUnit}`);
-  };
-
   const emptyBar = () => {
     setLoadedPlates({});
-    setReverseResult(`${barWeight} ${weightUnit}`);
+    setReverseResult(`${barWeight} ${isKg ? 'kg' : 'lbs'}`);
     setPlates([]);
     setTargetWeight('');
   };
@@ -147,7 +157,7 @@ const PlateCalculatorTab = () => {
         return sum + (parseFloat(weight) * Number(count));
       }, 0);
       const total = barWeight + (totalPlateWeight * 2);
-      setReverseResult(`${total} ${weightUnit}`);
+      setReverseResult(`${total} ${isKg ? 'kg' : 'lbs'}`);
       
       return newPlates;
     });
@@ -172,7 +182,7 @@ const PlateCalculatorTab = () => {
         return sum + (parseFloat(weight) * Number(count));
       }, 0);
       const total = barWeight + (totalPlateWeight * 2);
-      setReverseResult(`${total} ${weightUnit}`);
+      setReverseResult(`${total} ${isKg ? 'kg' : 'lbs'}`);
       
       return newPlates;
     });
@@ -194,6 +204,8 @@ const PlateCalculatorTab = () => {
       <PlateCalculatorSettings
         availablePlates={availablePlates}
         setAvailablePlates={setAvailablePlates}
+        availableBars={availableBars}
+        setAvailableBars={setAvailableBars}
         barWeight={barWeight}
         setBarWeight={setBarWeight}
         onBack={() => setShowSettings(false)}
@@ -215,7 +227,7 @@ const PlateCalculatorTab = () => {
             variant="outline"
             className="border-orange-600 text-orange-400 hover:bg-orange-600 hover:text-white"
           >
-            <Trash2 size={16} />
+            Empty Bar
           </Button>
           <Button
             onClick={() => setShowSettings(true)}
@@ -283,6 +295,7 @@ const PlateCalculatorTab = () => {
             setTargetWeight={setTargetWeight}
             barWeight={barWeight}
             setBarWeight={setBarWeight}
+            availableBars={availableBars}
             calculatePlates={calculatePlates}
             setPlates={setPlates}
             isDarkMode={isDarkMode}
@@ -331,10 +344,10 @@ const PlateCalculatorTab = () => {
         <ReverseCalculator
           barWeight={barWeight}
           availablePlates={availablePlates}
+          availableBars={availableBars}
           loadedPlates={loadedPlates}
           addPlateToReverse={addPlateToReverse}
           removePlateFromReverse={removePlateFromReverse}
-          emptyBar={emptyBar}
           reverseResult={reverseResult}
           isDarkMode={isDarkMode}
           isKg={isKg}

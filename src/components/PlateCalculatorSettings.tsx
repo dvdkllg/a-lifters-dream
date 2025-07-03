@@ -3,15 +3,22 @@ import React, { useState, useContext } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SettingsContext } from '@/pages/Index';
 import { PlateInfo } from './plate-calculator/types';
 import { getPlateColor } from './plate-calculator/utils';
 
+interface BarInfo {
+  weight: number;
+  label: string;
+}
+
 interface PlateCalculatorSettingsProps {
   availablePlates: PlateInfo[];
   setAvailablePlates: (plates: PlateInfo[]) => void;
+  availableBars: BarInfo[];
+  setAvailableBars: (bars: BarInfo[]) => void;
   barWeight: number;
   setBarWeight: (weight: number) => void;
   onBack: () => void;
@@ -20,22 +27,67 @@ interface PlateCalculatorSettingsProps {
 const PlateCalculatorSettings: React.FC<PlateCalculatorSettingsProps> = ({
   availablePlates,
   setAvailablePlates,
+  availableBars,
+  setAvailableBars,
   barWeight,
   setBarWeight,
   onBack
 }) => {
   const { isDarkMode, isKg } = useContext(SettingsContext);
   const [customBarWeight, setCustomBarWeight] = useState('');
+  const [customBarLabel, setCustomBarLabel] = useState('');
+  const [customPlateWeight, setCustomPlateWeight] = useState('');
 
   const addCustomBar = () => {
     const weight = parseFloat(customBarWeight);
-    if (weight > 0) {
-      setBarWeight(weight);
+    const label = customBarLabel.trim();
+    if (weight > 0 && label && !availableBars.some(bar => bar.weight === weight)) {
+      setAvailableBars([...availableBars, { weight, label }].sort((a, b) => a.weight - b.weight));
       setCustomBarWeight('');
+      setCustomBarLabel('');
     }
   };
 
+  const removeBar = (weight: number) => {
+    setAvailableBars(availableBars.filter(bar => bar.weight !== weight));
+    if (barWeight === weight) {
+      const remaining = availableBars.filter(bar => bar.weight !== weight);
+      if (remaining.length > 0) {
+        setBarWeight(remaining[0].weight);
+      }
+    }
+  };
+
+  const addCustomPlate = () => {
+    const weight = parseFloat(customPlateWeight);
+    if (weight > 0 && !availablePlates.some(plate => plate.weight === weight)) {
+      const newPlate = {
+        weight,
+        count: 0,
+        available: 10,
+        color: getPlateColor(weight, isKg)
+      };
+      setAvailablePlates([...availablePlates, newPlate].sort((a, b) => b.weight - a.weight));
+      setCustomPlateWeight('');
+    }
+  };
+
+  const removePlate = (weight: number) => {
+    setAvailablePlates(availablePlates.filter(plate => plate.weight !== weight));
+  };
+
   const resetToDefault = () => {
+    const defaultBars = isKg 
+      ? [
+          { weight: 20, label: '20kg Olympic Bar' }, 
+          { weight: 15, label: '15kg Women\'s Bar' }
+        ]
+      : [
+          { weight: 45, label: '45lbs Olympic Bar' }, 
+          { weight: 35, label: '35lbs Women\'s Bar' }
+        ];
+    
+    setAvailableBars(defaultBars);
     setBarWeight(isKg ? 20 : 45);
   };
 
@@ -81,13 +133,8 @@ const PlateCalculatorSettings: React.FC<PlateCalculatorSettingsProps> = ({
         isDarkMode ? "bg-gray-900" : "bg-gray-100"
       )}>
         <CardHeader>
-          <CardTitle className="text-orange-400">Bar Settings</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <span className={cn(isDarkMode ? "text-white" : "text-black")}>
-              Current Bar Weight: {barWeight} {isKg ? 'kg' : 'lbs'}
-            </span>
+          <div className="flex justify-between items-center">
+            <CardTitle className="text-orange-400">Bar Settings</CardTitle>
             <Button
               onClick={resetToDefault}
               size="sm"
@@ -97,13 +144,42 @@ const PlateCalculatorSettings: React.FC<PlateCalculatorSettingsProps> = ({
               Reset to Default
             </Button>
           </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-4">
+            {availableBars.map((bar) => (
+              <div key={bar.weight} className="flex items-center justify-between">
+                <span className={cn(isDarkMode ? "text-white" : "text-black")}>
+                  {bar.label} ({bar.weight} {isKg ? 'kg' : 'lbs'})
+                </span>
+                <Button
+                  onClick={() => removeBar(bar.weight)}
+                  size="sm"
+                  variant="outline"
+                  className="border-red-600 text-red-400 hover:bg-red-600 hover:text-white"
+                >
+                  <Trash2 size={16} />
+                </Button>
+              </div>
+            ))}
+          </div>
           
-          <div className="flex space-x-2">
+          <div className="grid grid-cols-1 gap-2">
             <Input
               type="number"
               value={customBarWeight}
               onChange={(e) => setCustomBarWeight(e.target.value)}
-              placeholder={`Custom bar weight (${isKg ? 'kg' : 'lbs'})`}
+              placeholder={`Bar weight (${isKg ? 'kg' : 'lbs'})`}
+              className={cn(
+                "border-gray-700",
+                isDarkMode ? "bg-gray-800 text-white" : "bg-white text-black"
+              )}
+            />
+            <Input
+              type="text"
+              value={customBarLabel}
+              onChange={(e) => setCustomBarLabel(e.target.value)}
+              placeholder="Bar name (e.g., Custom Bar)"
               className={cn(
                 "border-gray-700",
                 isDarkMode ? "bg-gray-800 text-white" : "bg-white text-black"
@@ -114,7 +190,8 @@ const PlateCalculatorSettings: React.FC<PlateCalculatorSettingsProps> = ({
               size="sm"
               className="bg-orange-600 hover:bg-orange-700"
             >
-              Set Custom Bar
+              <Plus size={16} className="mr-2" />
+              Add Custom Bar
             </Button>
           </div>
         </CardContent>
@@ -139,6 +216,26 @@ const PlateCalculatorSettings: React.FC<PlateCalculatorSettingsProps> = ({
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="flex space-x-2 mb-4">
+            <Input
+              type="number"
+              value={customPlateWeight}
+              onChange={(e) => setCustomPlateWeight(e.target.value)}
+              placeholder={`Plate weight (${isKg ? 'kg' : 'lbs'})`}
+              className={cn(
+                "border-gray-700",
+                isDarkMode ? "bg-gray-800 text-white" : "bg-white text-black"
+              )}
+            />
+            <Button
+              onClick={addCustomPlate}
+              size="sm"
+              className="bg-orange-600 hover:bg-orange-700"
+            >
+              <Plus size={16} />
+            </Button>
+          </div>
+          
           {availablePlates.map((plate, index) => (
             <div key={plate.weight} className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
@@ -166,6 +263,14 @@ const PlateCalculatorSettings: React.FC<PlateCalculatorSettingsProps> = ({
                     isDarkMode ? "bg-gray-800 text-white" : "bg-white text-black"
                   )}
                 />
+                <Button
+                  onClick={() => removePlate(plate.weight)}
+                  size="sm"
+                  variant="outline"
+                  className="border-red-600 text-red-400 hover:bg-red-600 hover:text-white"
+                >
+                  <Trash2 size={16} />
+                </Button>
               </div>
             </div>
           ))}

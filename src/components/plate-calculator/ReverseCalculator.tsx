@@ -2,18 +2,22 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { PlateInfo } from './types';
 
+interface BarInfo {
+  weight: number;
+  label: string;
+}
+
 interface ReverseCalculatorProps {
   barWeight: number;
   availablePlates: PlateInfo[];
+  availableBars: BarInfo[];
   loadedPlates: { [key: number]: number };
   addPlateToReverse: (plateWeight: number) => void;
   removePlateFromReverse: (plateWeight: number) => void;
-  emptyBar: () => void;
   reverseResult: string;
   isDarkMode: boolean;
   isKg: boolean;
@@ -23,19 +27,15 @@ interface ReverseCalculatorProps {
 const ReverseCalculator: React.FC<ReverseCalculatorProps> = ({
   barWeight,
   availablePlates,
+  availableBars,
   loadedPlates,
   addPlateToReverse,
   removePlateFromReverse,
-  emptyBar,
   reverseResult,
   isDarkMode,
   isKg,
   setBarWeight
 }) => {
-  const barOptions = isKg 
-    ? [{ value: 20, label: '20kg Olympic Bar' }, { value: 15, label: '15kg Women\'s Bar' }]
-    : [{ value: 45, label: '45lbs Olympic Bar' }, { value: 35, label: '35lbs Women\'s Bar' }];
-
   return (
     <Card className={cn(
       "border-orange-800",
@@ -63,15 +63,15 @@ const ReverseCalculator: React.FC<ReverseCalculatorProps> = ({
               "z-50",
               isDarkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
             )}>
-              {barOptions.map((option) => (
+              {availableBars.map((bar) => (
                 <SelectItem 
-                  key={option.value} 
-                  value={option.value.toString()}
+                  key={bar.weight} 
+                  value={bar.weight.toString()}
                   className={cn(
                     isDarkMode ? "text-white hover:bg-gray-700" : "text-black hover:bg-gray-100"
                   )}
                 >
-                  {option.label}
+                  {bar.label}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -113,14 +113,6 @@ const ReverseCalculator: React.FC<ReverseCalculatorProps> = ({
             ))}
           </div>
         </div>
-        
-        <Button
-          onClick={emptyBar}
-          variant="outline"
-          className="border-orange-600 text-orange-400 hover:bg-orange-600 hover:text-white w-full"
-        >
-          Empty Bar
-        </Button>
         
         <div className={cn(
           "p-4 rounded text-center font-bold text-xl",
