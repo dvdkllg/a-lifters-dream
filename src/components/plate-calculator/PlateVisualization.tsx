@@ -19,18 +19,18 @@ const PlateVisualization: React.FC<PlateVisualizationProps> = ({ plateList }) =>
   };
 
   const getPlateHeight = (weight: number) => {
-    if (weight >= 20 || weight >= 45) return 'h-16';
-    if (weight >= 15 || weight >= 35) return 'h-14';
-    if (weight >= 10 || weight >= 25) return 'h-12';
-    if (weight >= 5 || weight >= 10) return 'h-10';
-    return 'h-8';
+    if (weight >= 20 || weight >= 45) return 'h-16'; // Largest plates
+    if (weight >= 15 || weight >= 35) return 'h-12'; // Medium-large plates
+    if (weight >= 10 || weight >= 25) return 'h-10'; // Medium plates
+    if (weight >= 5 || weight >= 10) return 'h-8';   // Small plates
+    return 'h-6'; // Smallest plates
   };
   
   return (
     <div className="flex items-center justify-center my-6 overflow-x-auto">
       <div className="flex items-center space-x-0.5 min-w-0">
         {/* Left plates - heaviest inside (reverse order for left side) */}
-        <div className="flex">
+        <div className="flex items-center">
           {sortedPlates.map((plate, plateIndex) => (
             Array.from({ length: Number(plate.count) }).map((_, i) => (
               <div
@@ -72,7 +72,7 @@ const PlateVisualization: React.FC<PlateVisualizationProps> = ({ plateList }) =>
         <div className="w-3 h-8 bg-gradient-to-b from-gray-300 via-gray-400 to-gray-500 rounded-sm mx-1 flex-shrink-0 border border-gray-600"></div>
         
         {/* Right plates - heaviest inside (normal order) */}
-        <div className="flex">
+        <div className="flex items-center">
           {sortedPlates.map((plate, plateIndex) => (
             Array.from({ length: Number(plate.count) }).map((_, i) => (
               <div
