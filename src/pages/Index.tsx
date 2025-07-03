@@ -1,4 +1,3 @@
-
 import React, { useState, createContext, useContext } from 'react';
 import { cn } from '@/lib/utils';
 import { Pill, Calculator, Timer, Weight, Settings, Scale, User } from 'lucide-react';
@@ -8,6 +7,7 @@ import TimerTab from '@/components/TimerTab';
 import PlateCalculatorTab from '@/components/PlateCalculatorTab';
 import UnitConverterTab from '@/components/UnitConverterTab';
 import SettingsModal from '@/components/SettingsModal';
+import LoginModal from '@/components/LoginModal';
 
 type TabType = 'supplements' | 'calculator' | 'timer' | 'platecalculator' | 'unitconverter';
 
@@ -28,6 +28,7 @@ export const SettingsContext = createContext<AppSettings>({
 const Index = () => {
   const [activeTab, setActiveTab] = useState<TabType>('supplements');
   const [showSettings, setShowSettings] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [isKg, setIsKg] = useState(true);
 
@@ -78,6 +79,7 @@ const Index = () => {
         )}>
           <div className="flex justify-between items-center">
             <button
+              onClick={() => setShowLogin(true)}
               className={cn(
                 "flex items-center space-x-2 p-2 rounded-lg transition-colors",
                 isDarkMode ? "bg-gray-800 hover:bg-gray-700 text-gray-300" : "bg-gray-200 hover:bg-gray-300 text-gray-700"
@@ -180,6 +182,14 @@ const Index = () => {
           <SettingsModal
             isOpen={showSettings}
             onClose={() => setShowSettings(false)}
+          />
+        )}
+
+        {/* Login Modal */}
+        {showLogin && (
+          <LoginModal
+            isOpen={showLogin}
+            onClose={() => setShowLogin(false)}
           />
         )}
       </div>

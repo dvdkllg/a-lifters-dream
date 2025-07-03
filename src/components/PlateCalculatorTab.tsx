@@ -7,12 +7,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SettingsContext } from '@/pages/Index';
 import { cn } from '@/lib/utils';
-import { ArrowLeftRight, Minus, Settings, Plus } from 'lucide-react';
+import { ArrowLeftRight, Minus, Settings, Plus, Trash2 } from 'lucide-react';
 import PlateVisualization from './plate-calculator/PlateVisualization';
-import PlateManager from './plate-calculator/PlateManager';
-import CustomBarSettings from './plate-calculator/CustomBarSettings';
 import PlateCalculatorForm from './plate-calculator/PlateCalculatorForm';
 import ReverseCalculator from './plate-calculator/ReverseCalculator';
+import PlateCalculatorSettings from './PlateCalculatorSettings';
 import { PlateInfo, PlateCalculation } from './plate-calculator/types';
 import { getPlateColor } from './plate-calculator/utils';
 
@@ -24,6 +23,7 @@ const PlateCalculatorTab = () => {
   const [isReverse, setIsReverse] = useState(false);
   const [loadedPlates, setLoadedPlates] = useState<{ [key: number]: number }>({});
   const [reverseResult, setReverseResult] = useState('');
+  const [showSettings, setShowSettings] = useState(false);
   const [availablePlates, setAvailablePlates] = useState<PlateInfo[]>(
     [25, 20, 15, 10, 5, 2.5, 1.25].map(weight => ({
       weight,
@@ -32,9 +32,6 @@ const PlateCalculatorTab = () => {
       color: getPlateColor(weight, true)
     }))
   );
-  const [showPlateManager, setShowPlateManager] = useState(false);
-  const [showCustomBar, setShowCustomBar] = useState(false);
-  const [customBarWeight, setCustomBarWeight] = useState('');
 
   // Update plates and bar weight when unit changes
   useEffect(() => {
@@ -119,6 +116,8 @@ const PlateCalculatorTab = () => {
   const emptyBar = () => {
     setLoadedPlates({});
     setReverseResult(`${barWeight} ${weightUnit}`);
+    setPlates([]);
+    setTargetWeight('');
   };
 
   const getTotalWeight = () => {
@@ -179,15 +178,6 @@ const PlateCalculatorTab = () => {
     });
   };
 
-  const addCustomBar = () => {
-    const weight = parseFloat(customBarWeight);
-    if (weight > 0) {
-      setBarWeight(weight);
-      setCustomBarWeight('');
-      setShowCustomBar(false);
-    }
-  };
-
   const ReverseVisualization = () => {
     const reversePlates: PlateCalculation[] = Object.entries(loadedPlates).map(([weight, count]) => ({
       plate: parseFloat(weight),
@@ -198,6 +188,19 @@ const PlateCalculatorTab = () => {
     return <PlateVisualization plateList={reversePlates} />;
   };
 
+  // Show settings view
+  if (showSettings) {
+    return (
+      <PlateCalculatorSettings
+        availablePlates={availablePlates}
+        setAvailablePlates={setAvailablePlates}
+        barWeight={barWeight}
+        setBarWeight={setBarWeight}
+        onBack={() => setShowSettings(false)}
+      />
+    );
+  }
+
   return (
     <div className={cn(
       "p-4 space-y-6 min-h-full",
@@ -207,15 +210,15 @@ const PlateCalculatorTab = () => {
         <h2 className="text-2xl font-bold text-orange-400">Plate Calculator</h2>
         <div className="flex space-x-2">
           <Button
-            onClick={() => setShowCustomBar(!showCustomBar)}
+            onClick={emptyBar}
             size="sm"
             variant="outline"
             className="border-orange-600 text-orange-400 hover:bg-orange-600 hover:text-white"
           >
-            Bar
+            <Trash2 size={16} />
           </Button>
           <Button
-            onClick={() => setShowPlateManager(!showPlateManager)}
+            onClick={() => setShowSettings(true)}
             size="sm"
             variant="outline"
             className="border-orange-600 text-orange-400 hover:bg-orange-600 hover:text-white"
@@ -272,27 +275,6 @@ const PlateCalculatorTab = () => {
           {isReverse ? <ReverseVisualization /> : <PlateVisualization plateList={plates} />}
         </CardContent>
       </Card>
-
-      {/* Custom Bar Settings */}
-      {showCustomBar && (
-        <CustomBarSettings
-          customBarWeight={customBarWeight}
-          setCustomBarWeight={setCustomBarWeight}
-          addCustomBar={addCustomBar}
-          isDarkMode={isDarkMode}
-          isKg={isKg}
-        />
-      )}
-
-      {/* Settings Panels */}
-      {showPlateManager && (
-        <PlateManager
-          availablePlates={availablePlates}
-          setAvailablePlates={setAvailablePlates}
-          isDarkMode={isDarkMode}
-          isKg={isKg}
-        />
-      )}
 
       {!isReverse ? (
         <>
