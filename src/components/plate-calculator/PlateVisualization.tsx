@@ -14,21 +14,22 @@ const PlateVisualization: React.FC<PlateVisualizationProps> = ({ plateList }) =>
   const getPlateWidth = (weight: number) => {
     if (weight >= 20 || weight >= 45) return 'w-4';
     if (weight >= 10 || weight >= 25) return 'w-3';
-    if (weight >= 5 || weight >= 10) return 'w-2';
-    return 'w-1.5';
+    if (weight >= 5 || weight >= 10) return 'w-2.5';
+    return 'w-2';
   };
 
   const getPlateHeight = (weight: number) => {
     if (weight >= 20 || weight >= 45) return 'h-16';
-    if (weight >= 10 || weight >= 25) return 'h-14';
-    if (weight >= 5 || weight >= 10) return 'h-12';
-    return 'h-10';
+    if (weight >= 15 || weight >= 35) return 'h-14';
+    if (weight >= 10 || weight >= 25) return 'h-12';
+    if (weight >= 5 || weight >= 10) return 'h-10';
+    return 'h-8';
   };
   
   return (
     <div className="flex items-center justify-center my-6 overflow-x-auto">
       <div className="flex items-center space-x-0.5 min-w-0">
-        {/* Left plates - heaviest inside */}
+        {/* Left plates - heaviest inside (reverse order for left side) */}
         <div className="flex">
           {sortedPlates.map((plate, plateIndex) => (
             Array.from({ length: Number(plate.count) }).map((_, i) => (
@@ -53,25 +54,24 @@ const PlateVisualization: React.FC<PlateVisualizationProps> = ({ plateList }) =>
                 </span>
               </div>
             ))
-          ))}
+          )).reverse()}
         </div>
         
-        {/* Left collar */}
-        <div className="w-2 h-6 bg-gray-400 rounded-sm mx-1 flex-shrink-0"></div>
+        {/* Left sleeve/collar */}
+        <div className="w-3 h-8 bg-gradient-to-b from-gray-300 via-gray-400 to-gray-500 rounded-sm mx-1 flex-shrink-0 border border-gray-600"></div>
         
-        {/* Barbell with simplified realistic design */}
+        {/* Main barbell */}
         <div className="flex items-center flex-shrink-0">
-          {/* Main bar */}
-          <div className="w-32 h-4 bg-gradient-to-b from-gray-300 via-gray-400 to-gray-500 relative border-t border-b border-gray-600 rounded-sm">
-            <div className="absolute top-0.5 left-0 right-0 h-0.5 bg-gray-200 opacity-50 rounded-sm"></div>
-            <div className="absolute bottom-0.5 left-0 right-0 h-0.5 bg-gray-600 opacity-50 rounded-sm"></div>
+          <div className="w-32 h-6 bg-gradient-to-b from-gray-300 via-gray-400 to-gray-500 relative border-t border-b border-gray-600 rounded-sm">
+            <div className="absolute top-1 left-0 right-0 h-0.5 bg-gray-200 opacity-50 rounded-sm"></div>
+            <div className="absolute bottom-1 left-0 right-0 h-0.5 bg-gray-600 opacity-50 rounded-sm"></div>
           </div>
         </div>
         
-        {/* Right collar */}
-        <div className="w-2 h-6 bg-gray-400 rounded-sm mx-1 flex-shrink-0"></div>
+        {/* Right sleeve/collar */}
+        <div className="w-3 h-8 bg-gradient-to-b from-gray-300 via-gray-400 to-gray-500 rounded-sm mx-1 flex-shrink-0 border border-gray-600"></div>
         
-        {/* Right plates - heaviest inside */}
+        {/* Right plates - heaviest inside (normal order) */}
         <div className="flex">
           {sortedPlates.map((plate, plateIndex) => (
             Array.from({ length: Number(plate.count) }).map((_, i) => (
