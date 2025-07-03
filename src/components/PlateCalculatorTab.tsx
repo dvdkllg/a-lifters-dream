@@ -1,3 +1,4 @@
+
 import React, { useState, useContext, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -196,38 +197,6 @@ const PlateCalculatorTab = () => {
 
     return <PlateVisualization plateList={reversePlates} />;
   };
-
-  // Update plates and bar weight when unit changes
-  useEffect(() => {
-    const newPlates = isKg 
-      ? [25, 20, 15, 10, 5, 2.5, 1.25].map(weight => ({
-          weight,
-          count: 0,
-          available: 10,
-          color: getPlateColor(weight, true)
-        }))
-      : [55, 45, 35, 25, 10, 5, 2.5].map(weight => ({
-          weight,
-          count: 0,
-          available: 10,
-          color: getPlateColor(weight, false)
-        }));
-    
-    setAvailablePlates(newPlates);
-    setBarWeight(isKg ? 20 : 45);
-    setLoadedPlates({});
-    setReverseResult(`${isKg ? 20 : 45} ${isKg ? 'kg' : 'lbs'}`);
-    setPlates([]);
-  }, [isKg]);
-
-  // Initialize reverse result on component mount
-  useEffect(() => {
-    if (reverseResult === '') {
-      setReverseResult(`${barWeight} ${isKg ? 'kg' : 'lbs'}`);
-    }
-  }, [barWeight, isKg, reverseResult]);
-
-  const weightUnit = isKg ? 'kg' : 'lbs';
 
   return (
     <div className={cn(
