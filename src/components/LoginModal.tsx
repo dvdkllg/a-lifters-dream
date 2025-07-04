@@ -158,10 +158,6 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
               </button>
             </div>
           </form>
-          
-          <div className={cn("text-xs mt-4 p-3 rounded", isDarkMode ? "text-gray-500 bg-gray-800" : "text-gray-600 bg-gray-100")}>
-            <p><strong>Note:</strong> This is a demo login interface. For full authentication functionality, you'll need to integrate with a backend service like Supabase.</p>
-          </div>
         </CardContent>
       </Card>
     </div>

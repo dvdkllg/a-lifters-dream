@@ -1,4 +1,3 @@
-
 import React, { useState, createContext, useContext } from 'react';
 import { cn } from '@/lib/utils';
 import { Pill, Calculator, Timer, Weight, Settings, Scale, User } from 'lucide-react';
@@ -9,6 +8,7 @@ import PlateCalculatorTab from '@/components/PlateCalculatorTab';
 import UnitConverterTab from '@/components/UnitConverterTab';
 import SettingsModal from '@/components/SettingsModal';
 import LoginModal from '@/components/LoginModal';
+import AppLogo from '@/components/AppLogo';
 
 type TabType = 'supplements' | 'calculator' | 'timer' | 'platecalculator' | 'unitconverter';
 
@@ -88,9 +88,12 @@ const Index = () => {
             >
               <User size={20} />
             </button>
-            <h1 className={cn("text-xl font-bold absolute left-1/2 transform -translate-x-1/2", getTitleColor())}>
-              A Lifter's Dream
-            </h1>
+            <div className="flex items-center space-x-2 absolute left-1/2 transform -translate-x-1/2">
+              <AppLogo size={28} />
+              <h1 className={cn("text-xl font-bold", getTitleColor())}>
+                A Lifter's Dream
+              </h1>
+            </div>
             <button
               onClick={() => setShowSettings(true)}
               className={cn(
