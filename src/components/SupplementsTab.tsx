@@ -1,3 +1,4 @@
+
 import React, { useState, useContext, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, Clock, Trash2, Bell } from 'lucide-react';
 import { SettingsContext } from '@/pages/Index';
 import { cn } from '@/lib/utils';
-import { LocalNotifications } from '@capacitor/local-notifications';
+import { LocalNotifications, ScheduleEvery } from '@capacitor/local-notifications';
 import { Capacitor } from '@capacitor/core';
 
 interface Supplement {
@@ -70,7 +71,7 @@ const SupplementsTab = () => {
           schedule: {
             at: scheduledTime,
             repeats: true,
-            every: 'day'
+            every: 'day' as ScheduleEvery
           },
           sound: 'default'
         };
