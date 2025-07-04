@@ -30,7 +30,7 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState<TabType>('supplements');
   const [showSettings, setShowSettings] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState(false); // Changed to false for light mode default
   const [isKg, setIsKg] = useState(true);
 
   const renderActiveTab = () => {

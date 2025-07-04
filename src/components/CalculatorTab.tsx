@@ -13,55 +13,94 @@ const CalculatorTab = () => {
   const { isDarkMode, isKg } = useContext(SettingsContext);
   const [calculatorType, setCalculatorType] = useState<'1rm' | 'rpe' | 'percentage'>('1rm');
   
-  // 1RM Calculator states
+  // 1RM Calculator states (now includes RPE)
   const [weight, setWeight] = useState('');
   const [reps, setReps] = useState('');
+  const [rpe, setRpe] = useState('');
   const [oneRepMax, setOneRepMax] = useState<number | null>(null);
 
-  // RPE Calculator states
-  const [rpeWeight, setRpeWeight] = useState('');
-  const [rpeReps, setRpeReps] = useState('');
-  const [rpe, setRpe] = useState('');
-  const [rpeResult, setRpeResult] = useState<number | null>(null);
+  // RPE Calculator states (1RM + target reps/rpe → weight)
+  const [knownOneRM, setKnownOneRM] = useState('');
+  const [targetReps, setTargetReps] = useState('');
+  const [targetRPE, setTargetRPE] = useState('');
+  const [recommendedWeight, setRecommendedWeight] = useState<number | null>(null);
 
-  // Percentage Calculator states
+  // Percentage Calculator states (with optional reps/rpe)
   const [maxWeight, setMaxWeight] = useState('');
   const [percentage, setPercentage] = useState('');
+  const [optionalReps, setOptionalReps] = useState('');
+  const [optionalRPE, setOptionalRPE] = useState('');
   const [percentageResult, setPercentageResult] = useState<number | null>(null);
 
+  // RPE to RIR conversion
+  const rpeToRir = (rpe: number): number => {
+    return Math.max(0, 10 - rpe);
+  };
+
+  // Advanced 1RM calculation using RPE
   const calculate1RM = () => {
     const w = parseFloat(weight);
     const r = parseInt(reps);
+    const rpeValue = parseFloat(rpe);
     
-    if (w > 0 && r > 0 && r <= 15) {
-      // Using Epley formula: 1RM = Weight × (1 + Reps/30)
-      // More scientifically accurate than Brzycki for higher rep ranges
-      const result = w * (1 + r / 30);
+    if (w > 0 && r > 0 && r <= 20) {
+      let result: number;
+      
+      if (rpeValue && rpeValue >= 5 && rpeValue <= 10) {
+        // RPE-based calculation
+        const rir = rpeToRir(rpeValue);
+        const totalReps = r + rir;
+        // Using modified Epley formula with RPE adjustment
+        result = w * (1 + totalReps / 30);
+      } else {
+        // Standard Epley formula
+        result = w * (1 + r / 30);
+      }
+      
       setOneRepMax(Math.round(result * 10) / 10);
     }
   };
 
-  const calculateRPE = () => {
-    const w = parseFloat(rpeWeight);
-    const r = parseInt(rpeReps);
-    const rpeValue = parseFloat(rpe);
+  // RPE-based weight calculation
+  const calculateRPEWeight = () => {
+    const oneRM = parseFloat(knownOneRM);
+    const targetR = parseInt(targetReps);
+    const targetRPEValue = parseFloat(targetRPE);
     
-    if (w > 0 && r > 0 && rpeValue >= 5 && rpeValue <= 10) {
-      // RPE-based calculation using RIR (Reps in Reserve)
-      const repsInReserve = 10 - rpeValue;
-      const estimatedMax = r + repsInReserve;
-      const result = w * (1 + estimatedMax / 30);
-      setRpeResult(Math.round(result * 10) / 10);
+    if (oneRM > 0 && targetR > 0 && targetRPEValue >= 5 && targetRPEValue <= 10) {
+      const rir = rpeToRir(targetRPEValue);
+      const totalReps = targetR + rir;
+      
+      // Calculate weight based on RPE and target reps
+      const weight = oneRM / (1 + totalReps / 30);
+      setRecommendedWeight(Math.round(weight * 10) / 10);
     }
   };
 
+  // Enhanced percentage calculator
   const calculatePercentage = () => {
     const max = parseFloat(maxWeight);
     const percent = parseFloat(percentage);
     
     if (max > 0 && percent > 0 && percent <= 100) {
-      const result = (max * percent) / 100;
-      setPercentageResult(Math.round(result * 10) / 10);
+      let baseWeight = (max * percent) / 100;
+      
+      // Adjust based on optional reps and RPE
+      if (optionalReps && optionalRPE) {
+        const r = parseInt(optionalReps);
+        const rpeValue = parseFloat(optionalRPE);
+        
+        if (r > 0 && rpeValue >= 5 && rpeValue <= 10) {
+          const rir = rpeToRir(rpeValue);
+          const totalReps = r + rir;
+          
+          // Calculate what percentage should actually be used for the given reps/RPE
+          const adjustedMax = max / (1 + totalReps / 30);
+          baseWeight = adjustedMax * (percent / 100);
+        }
+      }
+      
+      setPercentageResult(Math.round(baseWeight * 10) / 10);
     }
   };
 
@@ -71,10 +110,12 @@ const CalculatorTab = () => {
         return (
           <Card className={cn(
             "border-blue-800",
-            isDarkMode ? "bg-gray-900" : "bg-gray-100"
+            isDarkMode ? "bg-gray-900" : "bg-gray-50"
           )}>
             <CardHeader>
-              <CardTitle className="text-blue-400">1 Rep Max Calculator</CardTitle>
+              <CardTitle className={cn("text-blue-600", isDarkMode && "text-blue-400")}>
+                1 Rep Max Calculator
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -97,19 +138,38 @@ const CalculatorTab = () => {
                 <Label className={cn(isDarkMode ? "text-gray-300" : "text-gray-700")}>
                   Reps:
                 </Label>
-                <Select value={reps} onValueChange={setReps}>
+                <Input
+                  type="number"
+                  value={reps}
+                  onChange={(e) => setReps(e.target.value)}
+                  placeholder="Enter reps performed"
+                  min="1"
+                  max="20"
+                  className={cn(
+                    "border-blue-600",
+                    isDarkMode ? "bg-gray-800 text-white" : "bg-white text-black"
+                  )}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className={cn(isDarkMode ? "text-gray-300" : "text-gray-700")}>
+                  RPE (Optional, 5-10):
+                </Label>
+                <Select value={rpe} onValueChange={setRpe}>
                   <SelectTrigger className={cn(
                     "border-blue-600",
                     isDarkMode ? "bg-gray-800 text-white" : "bg-white text-black"
                   )}>
-                    <SelectValue placeholder="Select reps" />
+                    <SelectValue placeholder="Select RPE (optional)" />
                   </SelectTrigger>
                   <SelectContent className={cn(
                     isDarkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
                   )}>
-                    {Array.from({length: 15}, (_, i) => i + 1).map((rep) => (
-                      <SelectItem key={rep} value={rep.toString()}>
-                        {rep}
+                    <SelectItem value="">None</SelectItem>
+                    {[5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10].map((rpeVal) => (
+                      <SelectItem key={rpeVal} value={rpeVal.toString()}>
+                        {rpeVal}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -127,9 +187,11 @@ const CalculatorTab = () => {
               {oneRepMax && (
                 <div className={cn(
                   "p-4 rounded text-center",
-                  isDarkMode ? "bg-gray-800 text-blue-400" : "bg-gray-200 text-blue-600"
+                  isDarkMode ? "bg-gray-800 text-blue-400" : "bg-blue-50 text-blue-600"
                 )}>
-                  <p className="text-sm font-medium">Estimated 1 Rep Max (Epley Formula):</p>
+                  <p className="text-sm font-medium">
+                    Estimated 1 Rep Max {rpe ? '(RPE-Enhanced)' : '(Epley Formula)'}:
+                  </p>
                   <p className="text-2xl font-bold">{oneRepMax} {isKg ? 'kg' : 'lbs'}</p>
                 </div>
               )}
@@ -141,21 +203,23 @@ const CalculatorTab = () => {
         return (
           <Card className={cn(
             "border-blue-800",
-            isDarkMode ? "bg-gray-900" : "bg-gray-100"
+            isDarkMode ? "bg-gray-900" : "bg-gray-50"
           )}>
             <CardHeader>
-              <CardTitle className="text-blue-400">RPE Calculator</CardTitle>
+              <CardTitle className={cn("text-blue-600", isDarkMode && "text-blue-400")}>
+                RPE Weight Calculator
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label className={cn(isDarkMode ? "text-gray-300" : "text-gray-700")}>
-                  Weight ({isKg ? 'kg' : 'lbs'}):
+                  Known 1RM ({isKg ? 'kg' : 'lbs'}):
                 </Label>
                 <Input
                   type="number"
-                  value={rpeWeight}
-                  onChange={(e) => setRpeWeight(e.target.value)}
-                  placeholder={`Enter weight in ${isKg ? 'kg' : 'lbs'}`}
+                  value={knownOneRM}
+                  onChange={(e) => setKnownOneRM(e.target.value)}
+                  placeholder={`Enter your 1RM in ${isKg ? 'kg' : 'lbs'}`}
                   className={cn(
                     "border-blue-600",
                     isDarkMode ? "bg-gray-800 text-white" : "bg-white text-black"
@@ -165,13 +229,13 @@ const CalculatorTab = () => {
 
               <div className="space-y-2">
                 <Label className={cn(isDarkMode ? "text-gray-300" : "text-gray-700")}>
-                  Reps:
+                  Target Reps:
                 </Label>
                 <Input
                   type="number"
-                  value={rpeReps}
-                  onChange={(e) => setRpeReps(e.target.value)}
-                  placeholder="Enter reps performed"
+                  value={targetReps}
+                  onChange={(e) => setTargetReps(e.target.value)}
+                  placeholder="How many reps do you want to do?"
                   min="1"
                   max="20"
                   className={cn(
@@ -183,14 +247,14 @@ const CalculatorTab = () => {
 
               <div className="space-y-2">
                 <Label className={cn(isDarkMode ? "text-gray-300" : "text-gray-700")}>
-                  RPE (5-10):
+                  Target RPE (5-10):
                 </Label>
-                <Select value={rpe} onValueChange={setRpe}>
+                <Select value={targetRPE} onValueChange={setTargetRPE}>
                   <SelectTrigger className={cn(
                     "border-blue-600",
                     isDarkMode ? "bg-gray-800 text-white" : "bg-white text-black"
                   )}>
-                    <SelectValue placeholder="Select RPE" />
+                    <SelectValue placeholder="Select target RPE" />
                   </SelectTrigger>
                   <SelectContent className={cn(
                     isDarkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
@@ -205,20 +269,22 @@ const CalculatorTab = () => {
               </div>
 
               <Button
-                onClick={calculateRPE}
+                onClick={calculateRPEWeight}
                 className="w-full bg-blue-600 hover:bg-blue-700"
               >
                 <Calculator size={16} className="mr-2" />
-                Calculate RPE-based 1RM
+                Calculate Weight
               </Button>
 
-              {rpeResult && (
+              {recommendedWeight && (
                 <div className={cn(
                   "p-4 rounded text-center",
-                  isDarkMode ? "bg-gray-800 text-blue-400" : "bg-gray-200 text-blue-600"
+                  isDarkMode ? "bg-gray-800 text-blue-400" : "bg-blue-50 text-blue-600"
                 )}>
-                  <p className="text-sm font-medium">Estimated 1 Rep Max (RPE Method):</p>
-                  <p className="text-2xl font-bold">{rpeResult} {isKg ? 'kg' : 'lbs'}</p>
+                  <p className="text-sm font-medium">
+                    Recommended Weight for {targetReps} reps at RPE {targetRPE}:
+                  </p>
+                  <p className="text-2xl font-bold">{recommendedWeight} {isKg ? 'kg' : 'lbs'}</p>
                 </div>
               )}
             </CardContent>
@@ -229,10 +295,12 @@ const CalculatorTab = () => {
         return (
           <Card className={cn(
             "border-blue-800",
-            isDarkMode ? "bg-gray-900" : "bg-gray-100"
+            isDarkMode ? "bg-gray-900" : "bg-gray-50"
           )}>
             <CardHeader>
-              <CardTitle className="text-blue-400">Percentage Calculator</CardTitle>
+              <CardTitle className={cn("text-blue-600", isDarkMode && "text-blue-400")}>
+                Percentage Calculator
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -270,6 +338,48 @@ const CalculatorTab = () => {
                 />
               </div>
 
+              <div className="space-y-2">
+                <Label className={cn(isDarkMode ? "text-gray-300" : "text-gray-700")}>
+                  Target Reps (Optional):
+                </Label>
+                <Input
+                  type="number"
+                  value={optionalReps}
+                  onChange={(e) => setOptionalReps(e.target.value)}
+                  placeholder="Enter target reps (optional)"
+                  min="1"
+                  max="20"
+                  className={cn(
+                    "border-blue-600",
+                    isDarkMode ? "bg-gray-800 text-white" : "bg-white text-black"
+                  )}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className={cn(isDarkMode ? "text-gray-300" : "text-gray-700")}>
+                  Target RPE (Optional):
+                </Label>
+                <Select value={optionalRPE} onValueChange={setOptionalRPE}>
+                  <SelectTrigger className={cn(
+                    "border-blue-600",
+                    isDarkMode ? "bg-gray-800 text-white" : "bg-white text-black"
+                  )}>
+                    <SelectValue placeholder="Select RPE (optional)" />
+                  </SelectTrigger>
+                  <SelectContent className={cn(
+                    isDarkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
+                  )}>
+                    <SelectItem value="">None</SelectItem>
+                    {[5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10].map((rpeVal) => (
+                      <SelectItem key={rpeVal} value={rpeVal.toString()}>
+                        {rpeVal}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
               <Button
                 onClick={calculatePercentage}
                 className="w-full bg-blue-600 hover:bg-blue-700"
@@ -281,9 +391,12 @@ const CalculatorTab = () => {
               {percentageResult && (
                 <div className={cn(
                   "p-4 rounded text-center",
-                  isDarkMode ? "bg-gray-800 text-blue-400" : "bg-gray-200 text-blue-600"
+                  isDarkMode ? "bg-gray-800 text-blue-400" : "bg-blue-50 text-blue-600"
                 )}>
-                  <p className="text-sm font-medium">{percentage}% of {maxWeight} {isKg ? 'kg' : 'lbs'}:</p>
+                  <p className="text-sm font-medium">
+                    {percentage}% of {maxWeight} {isKg ? 'kg' : 'lbs'}
+                    {optionalReps && optionalRPE ? ` (adjusted for ${optionalReps} reps @ RPE ${optionalRPE})` : ''}:
+                  </p>
                   <p className="text-2xl font-bold">{percentageResult} {isKg ? 'kg' : 'lbs'}</p>
                 </div>
               )}
@@ -301,13 +414,15 @@ const CalculatorTab = () => {
       "p-4 space-y-6 min-h-full pb-safe",
       isDarkMode ? "bg-black" : "bg-white"
     )}>
-      <h2 className="text-2xl font-bold text-center text-blue-400">Calculators</h2>
+      <h2 className={cn("text-2xl font-bold text-center", isDarkMode ? "text-blue-400" : "text-blue-600")}>
+        Calculators
+      </h2>
       
-      {/* Improved Calculator Type Slider */}
+      {/* Calculator Type Slider */}
       <div className="flex justify-center px-4">
         <div className={cn(
           "relative inline-flex rounded-xl p-1 transition-all duration-300 shadow-lg",
-          isDarkMode ? "bg-gray-800 border border-gray-700" : "bg-gray-200 border border-gray-300"
+          isDarkMode ? "bg-gray-800 border border-gray-700" : "bg-gray-100 border border-gray-300"
         )}>
           <div
             className={cn(
