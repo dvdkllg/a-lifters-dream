@@ -70,19 +70,19 @@ const PlateVisualization: React.FC<PlateVisualizationProps> = ({ plateList }) =>
           )).reverse()}
         </div>
         
-        {/* Left sleeve/collar */}
-        <div className="w-3 h-8 bg-gradient-to-b from-gray-300 via-gray-400 to-gray-500 rounded-sm mx-1 flex-shrink-0 border border-gray-600"></div>
+        {/* Left sleeve/collar - made thinner */}
+        <div className="w-2 h-6 bg-gradient-to-b from-gray-300 via-gray-400 to-gray-500 rounded-sm mx-1 flex-shrink-0 border border-gray-600"></div>
         
-        {/* Main barbell */}
+        {/* Main barbell - made thinner */}
         <div className="flex items-center flex-shrink-0">
-          <div className="w-32 h-6 bg-gradient-to-b from-gray-300 via-gray-400 to-gray-500 relative border-t border-b border-gray-600 rounded-sm">
-            <div className="absolute top-1 left-0 right-0 h-0.5 bg-gray-200 opacity-50 rounded-sm"></div>
-            <div className="absolute bottom-1 left-0 right-0 h-0.5 bg-gray-600 opacity-50 rounded-sm"></div>
+          <div className="w-32 h-4 bg-gradient-to-b from-gray-300 via-gray-400 to-gray-500 relative border-t border-b border-gray-600 rounded-sm">
+            <div className="absolute top-0.5 left-0 right-0 h-0.5 bg-gray-200 opacity-50 rounded-sm"></div>
+            <div className="absolute bottom-0.5 left-0 right-0 h-0.5 bg-gray-600 opacity-50 rounded-sm"></div>
           </div>
         </div>
         
-        {/* Right sleeve/collar */}
-        <div className="w-3 h-8 bg-gradient-to-b from-gray-300 via-gray-400 to-gray-500 rounded-sm mx-1 flex-shrink-0 border border-gray-600"></div>
+        {/* Right sleeve/collar - made thinner */}
+        <div className="w-2 h-6 bg-gradient-to-b from-gray-300 via-gray-400 to-gray-500 rounded-sm mx-1 flex-shrink-0 border border-gray-600"></div>
         
         {/* Right plates - heaviest inside (normal order) */}
         <div className="flex items-center">

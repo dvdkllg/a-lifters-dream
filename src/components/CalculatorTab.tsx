@@ -13,19 +13,19 @@ const CalculatorTab = () => {
   const { isDarkMode, isKg } = useContext(SettingsContext);
   const [calculatorType, setCalculatorType] = useState<'1rm' | 'rpe' | 'percentage'>('1rm');
   
-  // 1RM Calculator states (now includes RPE)
+  // 1RM Calculator states
   const [weight, setWeight] = useState('');
   const [reps, setReps] = useState('');
   const [rpe, setRpe] = useState('');
   const [oneRepMax, setOneRepMax] = useState<number | null>(null);
 
-  // RPE Calculator states (1RM + target reps/rpe → weight)
+  // RPE Calculator states
   const [knownOneRM, setKnownOneRM] = useState('');
   const [targetReps, setTargetReps] = useState('');
   const [targetRPE, setTargetRPE] = useState('');
   const [recommendedWeight, setRecommendedWeight] = useState<number | null>(null);
 
-  // Percentage Calculator states (with optional reps/rpe)
+  // Percentage Calculator states
   const [maxWeight, setMaxWeight] = useState('');
   const [percentage, setPercentage] = useState('');
   const [optionalReps, setOptionalReps] = useState('');
@@ -37,7 +37,7 @@ const CalculatorTab = () => {
     return Math.max(0, 10 - rpe);
   };
 
-  // Advanced 1RM calculation using RPE
+  // Enhanced 1RM calculation with RPE
   const calculate1RM = () => {
     const w = parseFloat(weight);
     const r = parseInt(reps);
@@ -47,10 +47,10 @@ const CalculatorTab = () => {
       let result: number;
       
       if (rpeValue && rpeValue >= 5 && rpeValue <= 10) {
-        // RPE-based calculation
+        // RPE-based calculation using RIR
         const rir = rpeToRir(rpeValue);
         const totalReps = r + rir;
-        // Using modified Epley formula with RPE adjustment
+        // Enhanced Epley formula with RPE adjustment
         result = w * (1 + totalReps / 30);
       } else {
         // Standard Epley formula
@@ -77,7 +77,7 @@ const CalculatorTab = () => {
     }
   };
 
-  // Enhanced percentage calculator
+  // Enhanced percentage calculator with RPE adjustment
   const calculatePercentage = () => {
     const max = parseFloat(maxWeight);
     const percent = parseFloat(percentage);
@@ -94,7 +94,7 @@ const CalculatorTab = () => {
           const rir = rpeToRir(rpeValue);
           const totalReps = r + rir;
           
-          // Calculate what percentage should actually be used for the given reps/RPE
+          // Calculate what the actual 1RM should be for the given reps/RPE
           const adjustedMax = max / (1 + totalReps / 30);
           baseWeight = adjustedMax * (percent / 100);
         }
@@ -166,7 +166,7 @@ const CalculatorTab = () => {
                   <SelectContent className={cn(
                     isDarkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
                   )}>
-                    <SelectItem value="">None</SelectItem>
+                    <SelectItem value="none">None</SelectItem>
                     {[5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10].map((rpeVal) => (
                       <SelectItem key={rpeVal} value={rpeVal.toString()}>
                         {rpeVal}
@@ -190,7 +190,7 @@ const CalculatorTab = () => {
                   isDarkMode ? "bg-gray-800 text-blue-400" : "bg-blue-50 text-blue-600"
                 )}>
                   <p className="text-sm font-medium">
-                    Estimated 1 Rep Max {rpe ? '(RPE-Enhanced)' : '(Epley Formula)'}:
+                    Estimated 1 Rep Max {rpe && rpe !== 'none' ? '(RPE-Enhanced)' : '(Epley Formula)'}:
                   </p>
                   <p className="text-2xl font-bold">{oneRepMax} {isKg ? 'kg' : 'lbs'}</p>
                 </div>
@@ -370,7 +370,7 @@ const CalculatorTab = () => {
                   <SelectContent className={cn(
                     isDarkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
                   )}>
-                    <SelectItem value="">None</SelectItem>
+                    <SelectItem value="none">None</SelectItem>
                     {[5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10].map((rpeVal) => (
                       <SelectItem key={rpeVal} value={rpeVal.toString()}>
                         {rpeVal}
@@ -395,7 +395,7 @@ const CalculatorTab = () => {
                 )}>
                   <p className="text-sm font-medium">
                     {percentage}% of {maxWeight} {isKg ? 'kg' : 'lbs'}
-                    {optionalReps && optionalRPE ? ` (adjusted for ${optionalReps} reps @ RPE ${optionalRPE})` : ''}:
+                    {optionalReps && optionalRPE && optionalRPE !== 'none' ? ` (adjusted for ${optionalReps} reps @ RPE ${optionalRPE})` : ''}:
                   </p>
                   <p className="text-2xl font-bold">{percentageResult} {isKg ? 'kg' : 'lbs'}</p>
                 </div>
