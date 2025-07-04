@@ -33,9 +33,10 @@ const CalculatorTab = () => {
     const w = parseFloat(weight);
     const r = parseInt(reps);
     
-    if (w > 0 && r > 0 && r <= 12) {
-      // Using Brzycki formula: 1RM = Weight × (36 / (37 - Reps))
-      const result = w * (36 / (37 - r));
+    if (w > 0 && r > 0 && r <= 15) {
+      // Using Epley formula: 1RM = Weight × (1 + Reps/30)
+      // More scientifically accurate than Brzycki for higher rep ranges
+      const result = w * (1 + r / 30);
       setOneRepMax(Math.round(result * 10) / 10);
     }
   };
@@ -45,11 +46,11 @@ const CalculatorTab = () => {
     const r = parseInt(rpeReps);
     const rpeValue = parseFloat(rpe);
     
-    if (w > 0 && r > 0 && rpeValue >= 6 && rpeValue <= 10) {
-      // RPE-based 1RM estimation
+    if (w > 0 && r > 0 && rpeValue >= 5 && rpeValue <= 10) {
+      // RPE-based calculation using RIR (Reps in Reserve)
       const repsInReserve = 10 - rpeValue;
-      const totalReps = r + repsInReserve;
-      const result = w * (36 / (37 - totalReps));
+      const estimatedMax = r + repsInReserve;
+      const result = w * (1 + estimatedMax / 30);
       setRpeResult(Math.round(result * 10) / 10);
     }
   };
@@ -106,7 +107,7 @@ const CalculatorTab = () => {
                   <SelectContent className={cn(
                     isDarkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
                   )}>
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((rep) => (
+                    {Array.from({length: 15}, (_, i) => i + 1).map((rep) => (
                       <SelectItem key={rep} value={rep.toString()}>
                         {rep}
                       </SelectItem>
@@ -128,7 +129,7 @@ const CalculatorTab = () => {
                   "p-4 rounded text-center",
                   isDarkMode ? "bg-gray-800 text-blue-400" : "bg-gray-200 text-blue-600"
                 )}>
-                  <p className="text-sm font-medium">Estimated 1 Rep Max:</p>
+                  <p className="text-sm font-medium">Estimated 1 Rep Max (Epley Formula):</p>
                   <p className="text-2xl font-bold">{oneRepMax} {isKg ? 'kg' : 'lbs'}</p>
                 </div>
               )}
@@ -171,6 +172,8 @@ const CalculatorTab = () => {
                   value={rpeReps}
                   onChange={(e) => setRpeReps(e.target.value)}
                   placeholder="Enter reps performed"
+                  min="1"
+                  max="20"
                   className={cn(
                     "border-blue-600",
                     isDarkMode ? "bg-gray-800 text-white" : "bg-white text-black"
@@ -180,7 +183,7 @@ const CalculatorTab = () => {
 
               <div className="space-y-2">
                 <Label className={cn(isDarkMode ? "text-gray-300" : "text-gray-700")}>
-                  RPE (6-10):
+                  RPE (5-10):
                 </Label>
                 <Select value={rpe} onValueChange={setRpe}>
                   <SelectTrigger className={cn(
@@ -192,7 +195,7 @@ const CalculatorTab = () => {
                   <SelectContent className={cn(
                     isDarkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
                   )}>
-                    {[6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10].map((rpeVal) => (
+                    {[5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10].map((rpeVal) => (
                       <SelectItem key={rpeVal} value={rpeVal.toString()}>
                         {rpeVal}
                       </SelectItem>
@@ -214,7 +217,7 @@ const CalculatorTab = () => {
                   "p-4 rounded text-center",
                   isDarkMode ? "bg-gray-800 text-blue-400" : "bg-gray-200 text-blue-600"
                 )}>
-                  <p className="text-sm font-medium">Estimated 1 Rep Max:</p>
+                  <p className="text-sm font-medium">Estimated 1 Rep Max (RPE Method):</p>
                   <p className="text-2xl font-bold">{rpeResult} {isKg ? 'kg' : 'lbs'}</p>
                 </div>
               )}
@@ -259,6 +262,7 @@ const CalculatorTab = () => {
                   placeholder="Enter percentage (e.g., 85)"
                   min="1"
                   max="100"
+                  step="0.1"
                   className={cn(
                     "border-blue-600",
                     isDarkMode ? "bg-gray-800 text-white" : "bg-white text-black"
@@ -294,31 +298,32 @@ const CalculatorTab = () => {
 
   return (
     <div className={cn(
-      "p-4 space-y-6 min-h-full",
+      "p-4 space-y-6 min-h-full pb-safe",
       isDarkMode ? "bg-black" : "bg-white"
     )}>
       <h2 className="text-2xl font-bold text-center text-blue-400">Calculators</h2>
       
-      {/* Calculator Type Toggle Slider */}
-      <div className="flex justify-center">
+      {/* Improved Calculator Type Slider */}
+      <div className="flex justify-center px-4">
         <div className={cn(
-          "relative inline-flex rounded-full p-1 transition-colors",
-          isDarkMode ? "bg-gray-800" : "bg-gray-200"
+          "relative inline-flex rounded-xl p-1 transition-all duration-300 shadow-lg",
+          isDarkMode ? "bg-gray-800 border border-gray-700" : "bg-gray-200 border border-gray-300"
         )}>
           <div
             className={cn(
-              "absolute top-1 bottom-1 w-1/3 rounded-full transition-transform duration-200 ease-in-out",
-              "bg-blue-400 shadow-sm",
-              calculatorType === '1rm' ? "translate-x-0" :
-              calculatorType === 'rpe' ? "translate-x-full" : "translate-x-[200%]"
+              "absolute top-1 bottom-1 rounded-lg transition-all duration-300 ease-out shadow-md",
+              "bg-gradient-to-r from-blue-500 to-blue-600",
+              calculatorType === '1rm' ? "left-1 w-[calc(33.333%-0.125rem)]" :
+              calculatorType === 'rpe' ? "left-[33.333%] w-[calc(33.333%-0.125rem)]" : 
+              "left-[66.666%] w-[calc(33.333%-0.125rem)]"
             )}
           />
           <button
             onClick={() => setCalculatorType('1rm')}
             className={cn(
-              "relative z-10 px-4 py-2 text-sm font-medium rounded-full transition-colors",
+              "relative z-10 px-6 py-3 text-sm font-semibold rounded-lg transition-all duration-200 min-w-[80px]",
               calculatorType === '1rm' 
-                ? "text-white" 
+                ? "text-white shadow-sm" 
                 : isDarkMode ? "text-gray-300 hover:text-white" : "text-gray-600 hover:text-gray-800"
             )}
           >
@@ -327,9 +332,9 @@ const CalculatorTab = () => {
           <button
             onClick={() => setCalculatorType('rpe')}
             className={cn(
-              "relative z-10 px-4 py-2 text-sm font-medium rounded-full transition-colors",
+              "relative z-10 px-6 py-3 text-sm font-semibold rounded-lg transition-all duration-200 min-w-[80px]",
               calculatorType === 'rpe' 
-                ? "text-white" 
+                ? "text-white shadow-sm" 
                 : isDarkMode ? "text-gray-300 hover:text-white" : "text-gray-600 hover:text-gray-800"
             )}
           >
@@ -338,13 +343,13 @@ const CalculatorTab = () => {
           <button
             onClick={() => setCalculatorType('percentage')}
             className={cn(
-              "relative z-10 px-4 py-2 text-sm font-medium rounded-full transition-colors",
+              "relative z-10 px-6 py-3 text-sm font-semibold rounded-lg transition-all duration-200 min-w-[80px]",
               calculatorType === 'percentage' 
-                ? "text-white" 
+                ? "text-white shadow-sm" 
                 : isDarkMode ? "text-gray-300 hover:text-white" : "text-gray-600 hover:text-gray-800"
             )}
           >
-            Percentage
+            %
           </button>
         </div>
       </div>

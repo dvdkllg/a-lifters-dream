@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { X, User } from 'lucide-react';
+import { X, User, Mail } from 'lucide-react';
 import { SettingsContext } from '@/pages/Index';
 import { cn } from '@/lib/utils';
 
@@ -29,10 +29,16 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
     onClose();
   };
 
+  const handleGoogleLogin = () => {
+    // TODO: Implement Google OAuth
+    console.log('Google login attempted');
+    onClose();
+  };
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 pt-safe pb-safe">
       <Card className={cn(
-        "w-full max-w-md border-gray-700",
+        "w-full max-w-md border-gray-700 max-h-[calc(100vh-2rem)] overflow-y-auto",
         isDarkMode ? "bg-gray-900" : "bg-white"
       )}>
         <CardHeader>
@@ -51,7 +57,33 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
             </Button>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          {/* Google Login Button */}
+          <Button
+            onClick={handleGoogleLogin}
+            variant="outline"
+            className={cn(
+              "w-full flex items-center justify-center space-x-2 border-2",
+              isDarkMode 
+                ? "border-gray-600 bg-gray-800 hover:bg-gray-700 text-white" 
+                : "border-gray-300 bg-white hover:bg-gray-50 text-black"
+            )}
+          >
+            <Mail size={20} />
+            <span>Continue with Google</span>
+          </Button>
+          
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className={cn("w-full border-t", isDarkMode ? "border-gray-700" : "border-gray-300")} />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className={cn("px-2", isDarkMode ? "bg-gray-900 text-gray-400" : "bg-white text-gray-500")}>
+                Or continue with
+              </span>
+            </div>
+          </div>
+
           <form onSubmit={handleSubmit} className="space-y-4">
             {!isLogin && (
               <div className="space-y-2">

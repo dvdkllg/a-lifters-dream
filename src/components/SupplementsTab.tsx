@@ -1,12 +1,13 @@
-
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Clock, Trash2 } from 'lucide-react';
+import { Plus, Clock, Trash2, Bell } from 'lucide-react';
 import { SettingsContext } from '@/pages/Index';
 import { cn } from '@/lib/utils';
+import { LocalNotifications } from '@capacitor/local-notifications';
+import { Capacitor } from '@capacitor/core';
 
 interface Supplement {
   id: string;
@@ -24,6 +25,62 @@ const SupplementsTab = () => {
     pillsPerDose: 1,
     scheduleTimes: ['']
   });
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+
+  useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      requestNotificationPermissions();
+    }
+  }, []);
+
+  const requestNotificationPermissions = async () => {
+    try {
+      const result = await LocalNotifications.requestPermissions();
+      setNotificationsEnabled(result.display === 'granted');
+    } catch (error) {
+      console.log('Notification permissions error:', error);
+    }
+  };
+
+  const scheduleNotifications = async (supplement: Supplement) => {
+    if (!Capacitor.isNativePlatform() || !notificationsEnabled) return;
+
+    try {
+      // Cancel existing notifications for this supplement
+      await LocalNotifications.cancel({
+        notifications: [{ id: parseInt(supplement.id) }]
+      });
+
+      // Schedule new notifications
+      const notifications = supplement.scheduleTimes.map((time, index) => {
+        const [hours, minutes] = time.split(':').map(Number);
+        const now = new Date();
+        const scheduledTime = new Date();
+        scheduledTime.setHours(hours, minutes, 0, 0);
+        
+        // If time has passed today, schedule for tomorrow
+        if (scheduledTime <= now) {
+          scheduledTime.setDate(scheduledTime.getDate() + 1);
+        }
+
+        return {
+          id: parseInt(supplement.id) + index,
+          title: 'Supplement Reminder',
+          body: `Time to take ${supplement.pillsPerDose} ${supplement.name} pill(s)`,
+          schedule: {
+            at: scheduledTime,
+            repeats: true,
+            every: 'day'
+          },
+          sound: 'default'
+        };
+      });
+
+      await LocalNotifications.schedule({ notifications });
+    } catch (error) {
+      console.log('Schedule notification error:', error);
+    }
+  };
 
   const addTimeSlot = () => {
     setFormData({
@@ -43,7 +100,7 @@ const SupplementsTab = () => {
     setFormData({ ...formData, scheduleTimes: newTimes });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const newSupplement: Supplement = {
       id: Date.now().toString(),
@@ -53,11 +110,17 @@ const SupplementsTab = () => {
     };
     
     setSupplements([...supplements, newSupplement]);
+    await scheduleNotifications(newSupplement);
     setFormData({ name: '', pillsPerDose: 1, scheduleTimes: [''] });
     setShowForm(false);
   };
 
-  const deleteSupplement = (id: string) => {
+  const deleteSupplement = async (id: string) => {
+    if (Capacitor.isNativePlatform()) {
+      await LocalNotifications.cancel({
+        notifications: [{ id: parseInt(id) }]
+      });
+    }
     setSupplements(supplements.filter(sup => sup.id !== id));
   };
 
@@ -79,15 +142,27 @@ const SupplementsTab = () => {
 
   return (
     <div className={cn(
-      "p-4 space-y-4 min-h-full",
+      "p-4 space-y-4 min-h-full pb-safe",
       isDarkMode ? "bg-black" : "bg-white"
     )}>
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-purple-400">Supplements</h2>
-        <Button onClick={() => setShowForm(!showForm)} className="bg-purple-600 hover:bg-purple-700">
-          <Plus size={16} />
-          Add Supplement
-        </Button>
+        <div className="flex gap-2">
+          {Capacitor.isNativePlatform() && (
+            <Button
+              onClick={requestNotificationPermissions}
+              size="sm"
+              variant="outline"
+              className="border-purple-600 text-purple-400 hover:bg-purple-600 hover:text-white"
+            >
+              <Bell size={16} />
+            </Button>
+          )}
+          <Button onClick={() => setShowForm(!showForm)} className="bg-purple-600 hover:bg-purple-700">
+            <Plus size={16} />
+            Add Supplement
+          </Button>
+        </div>
       </div>
 
       {showForm && (

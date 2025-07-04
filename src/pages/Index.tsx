@@ -1,3 +1,4 @@
+
 import React, { useState, createContext, useContext } from 'react';
 import { cn } from '@/lib/utils';
 import { Pill, Calculator, Timer, Weight, Settings, Scale, User } from 'lucide-react';
@@ -69,12 +70,12 @@ const Index = () => {
   return (
     <SettingsContext.Provider value={{ isDarkMode, isKg, setIsDarkMode, setIsKg }}>
       <div className={cn(
-        "min-h-screen flex flex-col",
+        "min-h-screen flex flex-col safe-area-inset",
         isDarkMode ? "bg-black text-white" : "bg-white text-black"
       )}>
-        {/* Header */}
+        {/* Header with mobile-safe padding */}
         <div className={cn(
-          "p-4 shadow-lg relative",
+          "p-4 shadow-lg relative pt-safe",
           isDarkMode ? "bg-gray-900" : "bg-gray-100"
         )}>
           <div className="flex justify-between items-center">
@@ -92,28 +93,31 @@ const Index = () => {
             </h1>
             <button
               onClick={() => setShowSettings(true)}
-              className="p-2 rounded-lg hover:bg-gray-800 transition-colors"
+              className={cn(
+                "p-2 rounded-lg transition-colors",
+                isDarkMode ? "hover:bg-gray-800 text-gray-400" : "hover:bg-gray-300 text-gray-600"
+              )}
             >
-              <Settings size={20} className="text-gray-400" />
+              <Settings size={20} />
             </button>
           </div>
         </div>
 
-        {/* Main Content */}
-        <div className="flex-1 overflow-auto pb-24">
+        {/* Main Content with mobile-safe padding */}
+        <div className="flex-1 overflow-auto pb-safe-bottom">
           {renderActiveTab()}
         </div>
 
-        {/* Fixed Bottom Navigation */}
+        {/* Fixed Bottom Navigation with mobile-safe padding */}
         <div className={cn(
-          "fixed bottom-0 left-0 right-0",
+          "fixed bottom-0 left-0 right-0 pb-safe",
           isDarkMode ? "bg-gray-900" : "bg-gray-100"
         )}>
-          <div className="flex justify-around py-2">
+          <div className="flex justify-around py-2 px-2">
             <button
               onClick={() => setActiveTab('supplements')}
               className={cn(
-                "flex flex-col items-center py-2 px-2 rounded-lg transition-colors text-xs",
+                "flex flex-col items-center py-2 px-2 rounded-lg transition-colors text-xs min-w-[60px]",
                 activeTab === 'supplements' 
                   ? "bg-purple-600 text-white" 
                   : "text-gray-400 hover:text-white"
@@ -126,7 +130,7 @@ const Index = () => {
             <button
               onClick={() => setActiveTab('calculator')}
               className={cn(
-                "flex flex-col items-center py-2 px-2 rounded-lg transition-colors text-xs",
+                "flex flex-col items-center py-2 px-2 rounded-lg transition-colors text-xs min-w-[60px]",
                 activeTab === 'calculator' 
                   ? "bg-blue-600 text-white" 
                   : "text-gray-400 hover:text-white"
@@ -139,7 +143,7 @@ const Index = () => {
             <button
               onClick={() => setActiveTab('timer')}
               className={cn(
-                "flex flex-col items-center py-2 px-2 rounded-lg transition-colors text-xs",
+                "flex flex-col items-center py-2 px-2 rounded-lg transition-colors text-xs min-w-[60px]",
                 activeTab === 'timer' 
                   ? "bg-green-600 text-white" 
                   : "text-gray-400 hover:text-white"
@@ -152,7 +156,7 @@ const Index = () => {
             <button
               onClick={() => setActiveTab('platecalculator')}
               className={cn(
-                "flex flex-col items-center py-2 px-2 rounded-lg transition-colors text-xs",
+                "flex flex-col items-center py-2 px-2 rounded-lg transition-colors text-xs min-w-[60px]",
                 activeTab === 'platecalculator' 
                   ? "bg-orange-600 text-white" 
                   : "text-gray-400 hover:text-white"
@@ -165,7 +169,7 @@ const Index = () => {
             <button
               onClick={() => setActiveTab('unitconverter')}
               className={cn(
-                "flex flex-col items-center py-2 px-2 rounded-lg transition-colors text-xs",
+                "flex flex-col items-center py-2 px-2 rounded-lg transition-colors text-xs min-w-[60px]",
                 activeTab === 'unitconverter' 
                   ? "bg-cyan-600 text-white" 
                   : "text-gray-400 hover:text-white"

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useContext } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,6 +6,9 @@ import { Label } from '@/components/ui/label';
 import { SettingsContext } from '@/pages/Index';
 import { cn } from '@/lib/utils';
 import { Play, Pause, RotateCcw, Plus, Trash2 } from 'lucide-react';
+import { LocalNotifications } from '@capacitor/local-notifications';
+import { Haptics, ImpactStyle } from '@capacitor/haptics';
+import { Capacitor } from '@capacitor/core';
 
 const TimerTab = () => {
   const { isDarkMode } = useContext(SettingsContext);
@@ -26,10 +28,28 @@ const TimerTab = () => {
       }, 1000);
     } else if (time === 0 && isRunning) {
       setIsRunning(false);
-      // Timer finished - could add notification here
+      handleTimerFinished();
     }
     return () => clearInterval(interval);
   }, [isRunning, time]);
+
+  const handleTimerFinished = async () => {
+    if (Capacitor.isNativePlatform()) {
+      try {
+        await Haptics.impact({ style: ImpactStyle.Heavy });
+        await LocalNotifications.schedule({
+          notifications: [{
+            id: 1,
+            title: 'Rest Timer Finished!',
+            body: 'Your rest period is complete. Time for the next set!',
+            sound: 'default'
+          }]
+        });
+      } catch (error) {
+        console.log('Timer notification error:', error);
+      }
+    }
+  };
 
   const handleStart = () => {
     if (time > 0) {
@@ -125,12 +145,12 @@ const TimerTab = () => {
 
   return (
     <div className={cn(
-      "p-4 space-y-6 min-h-full",
+      "p-4 space-y-6 min-h-full pb-safe",
       isDarkMode ? "bg-black" : "bg-white"
     )}>
       <h2 className="text-2xl font-bold text-center text-green-400">Rest Timer</h2>
       
-      <div className="flex gap-4">
+      <div className="flex flex-col lg:flex-row gap-4">
         {/* Left side - Main Timer and Number Pad */}
         <div className="flex-1 space-y-6">
           {/* Main Timer */}
@@ -260,7 +280,7 @@ const TimerTab = () => {
         </div>
 
         {/* Right side - Presets */}
-        <div className="w-64">
+        <div className="w-full lg:w-64">
           <Card className={cn(
             "border-green-800 h-full",
             isDarkMode ? "bg-gray-900" : "bg-gray-100"
