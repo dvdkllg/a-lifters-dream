@@ -1,5 +1,5 @@
 
-import React, { useState, createContext } from 'react';
+import React, { useState, createContext, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import SupplementsTab from '@/components/SupplementsTab';
 import CalculatorTab from '@/components/CalculatorTab';
@@ -12,12 +12,17 @@ import AppHeader from '@/components/AppHeader';
 import BottomNavigation from '@/components/BottomNavigation';
 import { APP_CONFIG } from '@/constants/app';
 import { TabType, AppSettings } from '@/types/app';
+import { NotificationService } from '@/services/notificationService';
 
 export const SettingsContext = createContext<AppSettings>({
   isDarkMode: APP_CONFIG.defaultSettings.isDarkMode,
   isKg: APP_CONFIG.defaultSettings.isKg,
   setIsDarkMode: () => {},
-  setIsKg: () => {}
+  setIsKg: () => {},
+  motivationReminder: false,
+  setMotivationReminder: () => {},
+  harshMotivation: false,
+  setHarshMotivation: () => {}
 });
 
 const Index = () => {
@@ -26,10 +31,28 @@ const Index = () => {
   const [showLogin, setShowLogin] = useState(false);
   const [isDarkMode, setIsDarkModeState] = useState<boolean>(APP_CONFIG.defaultSettings.isDarkMode);
   const [isKg, setIsKgState] = useState<boolean>(APP_CONFIG.defaultSettings.isKg);
+  const [motivationReminder, setMotivationReminderState] = useState<boolean>(false);
+  const [harshMotivation, setHarshMotivationState] = useState<boolean>(false);
 
   // Wrapper functions to match the expected interface
   const setIsDarkMode = (value: boolean) => setIsDarkModeState(value);
   const setIsKg = (value: boolean) => setIsKgState(value);
+  const setMotivationReminder = (value: boolean) => {
+    setMotivationReminderState(value);
+    const notificationService = NotificationService.getInstance();
+    if (value) {
+      notificationService.requestPermissions().then(() => {
+        notificationService.startMotivationalReminders(true, harshMotivation);
+      });
+    }
+  };
+  const setHarshMotivation = (value: boolean) => setHarshMotivationState(value);
+
+  useEffect(() => {
+    // Update last app open timestamp when component mounts
+    const notificationService = NotificationService.getInstance();
+    notificationService.updateLastAppOpen();
+  }, []);
 
   const renderActiveTab = () => {
     switch (activeTab) {
@@ -49,7 +72,16 @@ const Index = () => {
   };
 
   return (
-    <SettingsContext.Provider value={{ isDarkMode, isKg, setIsDarkMode, setIsKg }}>
+    <SettingsContext.Provider value={{ 
+      isDarkMode, 
+      isKg, 
+      setIsDarkMode, 
+      setIsKg, 
+      motivationReminder, 
+      setMotivationReminder, 
+      harshMotivation, 
+      setHarshMotivation 
+    }}>
       <div className={cn(
         "min-h-screen flex flex-col safe-area-inset",
         isDarkMode ? "bg-black text-white" : "bg-white text-black"

@@ -50,10 +50,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
         <div className="flex items-center space-x-2">
           <button
             onClick={handleDonateClick}
-            className={cn(
-              "p-2 rounded-lg transition-colors",
-              isDarkMode ? "hover:bg-gray-800 text-yellow-400 hover:text-yellow-300" : "hover:bg-gray-300 text-yellow-600 hover:text-yellow-500"
-            )}
+            className="p-2 rounded-lg transition-all duration-200 text-green-500 hover:text-green-400 hover:bg-green-500/10 hover:scale-110"
             title="Support the project"
           >
             <DollarSign size={20} />
