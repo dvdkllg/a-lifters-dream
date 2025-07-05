@@ -24,8 +24,8 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState<TabType>('supplements');
   const [showSettings, setShowSettings] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
-  const [isDarkMode, setIsDarkModeState] = useState(APP_CONFIG.defaultSettings.isDarkMode);
-  const [isKg, setIsKgState] = useState(APP_CONFIG.defaultSettings.isKg);
+  const [isDarkMode, setIsDarkModeState] = useState<boolean>(APP_CONFIG.defaultSettings.isDarkMode);
+  const [isKg, setIsKgState] = useState<boolean>(APP_CONFIG.defaultSettings.isKg);
 
   // Wrapper functions to match the expected interface
   const setIsDarkMode = (value: boolean) => setIsDarkModeState(value);
