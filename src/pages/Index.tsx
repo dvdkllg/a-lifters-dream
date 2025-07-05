@@ -13,6 +13,7 @@ import BottomNavigation from '@/components/BottomNavigation';
 import { APP_CONFIG } from '@/constants/app';
 import { TabType, AppSettings } from '@/types/app';
 import { NotificationService } from '@/services/notificationService';
+import { StorageService } from '@/services/storageService';
 
 export const SettingsContext = createContext<AppSettings>({
   isDarkMode: APP_CONFIG.defaultSettings.isDarkMode,
@@ -34,11 +35,38 @@ const Index = () => {
   const [motivationReminder, setMotivationReminderState] = useState<boolean>(false);
   const [harshMotivation, setHarshMotivationState] = useState<boolean>(false);
 
-  // Wrapper functions to match the expected interface
-  const setIsDarkMode = (value: boolean) => setIsDarkModeState(value);
-  const setIsKg = (value: boolean) => setIsKgState(value);
+  const storageService = StorageService.getInstance();
+
+  // Load settings from storage on component mount
+  useEffect(() => {
+    const loadSettings = async () => {
+      const savedDarkMode = await storageService.getItem<boolean>('isDarkMode');
+      const savedIsKg = await storageService.getItem<boolean>('isKg');
+      const savedMotivationReminder = await storageService.getItem<boolean>('motivationReminder');
+      const savedHarshMotivation = await storageService.getItem<boolean>('harshMotivation');
+      
+      if (savedDarkMode !== null) setIsDarkModeState(savedDarkMode);
+      if (savedIsKg !== null) setIsKgState(savedIsKg);
+      if (savedMotivationReminder !== null) setMotivationReminderState(savedMotivationReminder);
+      if (savedHarshMotivation !== null) setHarshMotivationState(savedHarshMotivation);
+    };
+    loadSettings();
+  }, []);
+
+  // Wrapper functions to match the expected interface and save to storage
+  const setIsDarkMode = (value: boolean) => {
+    setIsDarkModeState(value);
+    storageService.setItem('isDarkMode', value);
+  };
+  
+  const setIsKg = (value: boolean) => {
+    setIsKgState(value);
+    storageService.setItem('isKg', value);
+  };
+  
   const setMotivationReminder = (value: boolean) => {
     setMotivationReminderState(value);
+    storageService.setItem('motivationReminder', value);
     const notificationService = NotificationService.getInstance();
     if (value) {
       notificationService.requestPermissions().then(() => {
@@ -46,7 +74,11 @@ const Index = () => {
       });
     }
   };
-  const setHarshMotivation = (value: boolean) => setHarshMotivationState(value);
+  
+  const setHarshMotivation = (value: boolean) => {
+    setHarshMotivationState(value);
+    storageService.setItem('harshMotivation', value);
+  };
 
   useEffect(() => {
     // Update last app open timestamp when component mounts

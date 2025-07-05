@@ -1,12 +1,12 @@
-
 import React, { useState, useContext } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { X, User, Mail } from 'lucide-react';
+import { X, User, Mail, Info } from 'lucide-react';
 import { SettingsContext } from '@/pages/Index';
 import { cn } from '@/lib/utils';
+import { Capacitor } from '@capacitor/core';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -58,6 +58,21 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
+          {Capacitor.isNativePlatform() && (
+            <div className={cn(
+              "p-3 rounded-lg border flex items-start space-x-2",
+              isDarkMode ? "bg-blue-900/20 border-blue-700" : "bg-blue-50 border-blue-200"
+            )}>
+              <Info size={16} className="text-blue-500 mt-0.5 flex-shrink-0" />
+              <div className="text-sm">
+                <p className={cn(isDarkMode ? "text-blue-300" : "text-blue-700")}>
+                  <strong>Mobile Note:</strong> Authentication is currently in development for the mobile app. 
+                  Your data is saved locally on your device and will persist until the app is uninstalled.
+                </p>
+              </div>
+            </div>
+          )}
+          
           {/* Google Login Button */}
           <Button
             onClick={handleGoogleLogin}
