@@ -10,7 +10,7 @@ import { LocalNotifications } from '@capacitor/local-notifications';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { Capacitor } from '@capacitor/core';
 import TimerOverlay from './TimerOverlay';
-import { StorageService } from '@/services/storageService';
+import { SecureStorageService } from '@/services/secureStorageService';
 
 const TimerTab = () => {
   const { isDarkMode } = useContext(SettingsContext);
@@ -23,22 +23,33 @@ const TimerTab = () => {
   const [showAddPreset, setShowAddPreset] = useState(false);
   const [showTimerOverlay, setShowTimerOverlay] = useState(false);
 
-  const storageService = StorageService.getInstance();
+  const storageService = SecureStorageService.getInstance();
 
-  // Load presets from storage on component mount
+  // Load presets from secure storage on component mount
   useEffect(() => {
     const loadPresets = async () => {
-      const savedPresets = await storageService.getItem<number[]>('timerPresets');
-      if (savedPresets) {
-        setPresets(savedPresets);
+      try {
+        const savedPresets = await storageService.getItem<number[]>('timerPresets');
+        if (savedPresets) {
+          setPresets(savedPresets);
+        }
+      } catch (error) {
+        console.error('Failed to load timer presets:', error);
       }
     };
     loadPresets();
   }, []);
 
-  // Save presets to storage whenever they change
+  // Save presets to secure storage whenever they change
   useEffect(() => {
-    storageService.setItem('timerPresets', presets);
+    const savePresets = async () => {
+      try {
+        await storageService.setItem('timerPresets', presets);
+      } catch (error) {
+        console.error('Failed to save timer presets:', error);
+      }
+    };
+    savePresets();
   }, [presets]);
 
   useEffect(() => {

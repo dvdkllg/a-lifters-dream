@@ -19,10 +19,12 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({ isVisible, onClose, onReset
 
   useEffect(() => {
     if (isVisible) {
+      // Ensure overlay appears on top of everything
+      document.body.style.overflow = 'hidden';
+      
       // Create and play alarm sound
       if (!audioRef.current) {
         audioRef.current = new Audio();
-        // Using a web-compatible alarm sound URL
         audioRef.current.src = 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+D2um8gBTOH0fPTfjMGLnvN8+KVRAM';
         audioRef.current.loop = true;
         audioRef.current.volume = 0.7;
@@ -30,7 +32,7 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({ isVisible, onClose, onReset
       
       audioRef.current.play().catch(console.error);
       
-      // Trigger haptic feedback on mobile
+      // Trigger intensive haptic feedback on mobile
       if (Capacitor.isNativePlatform()) {
         const vibrate = async () => {
           for (let i = 0; i < 5; i++) {
@@ -40,8 +42,15 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({ isVisible, onClose, onReset
         };
         vibrate();
       }
+
+      // Request focus to ensure overlay is visible
+      if (Capacitor.isNativePlatform()) {
+        // On mobile, this helps ensure the app comes to foreground
+        window.focus();
+      }
     } else {
-      // Stop alarm when overlay is closed
+      document.body.style.overflow = 'auto';
+      
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current.currentTime = 0;
@@ -49,6 +58,7 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({ isVisible, onClose, onReset
     }
 
     return () => {
+      document.body.style.overflow = 'auto';
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current.currentTime = 0;
@@ -76,9 +86,9 @@ const TimerOverlay: React.FC<TimerOverlayProps> = ({ isVisible, onClose, onReset
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 animate-pulse">
+    <div className="fixed inset-0 bg-black bg-opacity-95 flex items-center justify-center z-[9999] animate-pulse" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
       <div className={cn(
-        "p-8 rounded-2xl shadow-2xl text-center max-w-sm mx-4 border-4",
+        "p-8 rounded-2xl shadow-2xl text-center max-w-sm mx-4 border-4 animate-bounce",
         isDarkMode ? "bg-gray-900 border-green-400" : "bg-white border-green-500"
       )}>
         <div className="mb-6">

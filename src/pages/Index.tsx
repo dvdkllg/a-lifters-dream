@@ -13,7 +13,7 @@ import BottomNavigation from '@/components/BottomNavigation';
 import { APP_CONFIG } from '@/constants/app';
 import { TabType, AppSettings } from '@/types/app';
 import { NotificationService } from '@/services/notificationService';
-import { StorageService } from '@/services/storageService';
+import { SecureStorageService } from '@/services/secureStorageService';
 
 export const SettingsContext = createContext<AppSettings>({
   isDarkMode: APP_CONFIG.defaultSettings.isDarkMode,
@@ -35,49 +35,56 @@ const Index = () => {
   const [motivationReminder, setMotivationReminderState] = useState<boolean>(false);
   const [harshMotivation, setHarshMotivationState] = useState<boolean>(false);
 
-  const storageService = StorageService.getInstance();
+  const storageService = SecureStorageService.getInstance();
 
-  // Load settings from storage on component mount
+  // Load settings from secure storage on component mount
   useEffect(() => {
     const loadSettings = async () => {
-      const savedDarkMode = await storageService.getItem<boolean>('isDarkMode');
-      const savedIsKg = await storageService.getItem<boolean>('isKg');
-      const savedMotivationReminder = await storageService.getItem<boolean>('motivationReminder');
-      const savedHarshMotivation = await storageService.getItem<boolean>('harshMotivation');
-      
-      if (savedDarkMode !== null) setIsDarkModeState(savedDarkMode);
-      if (savedIsKg !== null) setIsKgState(savedIsKg);
-      if (savedMotivationReminder !== null) setMotivationReminderState(savedMotivationReminder);
-      if (savedHarshMotivation !== null) setHarshMotivationState(savedHarshMotivation);
+      try {
+        const savedDarkMode = await storageService.getItem<boolean>('isDarkMode');
+        const savedIsKg = await storageService.getItem<boolean>('isKg');
+        const savedMotivationReminder = await storageService.getItem<boolean>('motivationReminder');
+        const savedHarshMotivation = await storageService.getItem<boolean>('harshMotivation');
+        
+        if (savedDarkMode !== null) setIsDarkModeState(savedDarkMode);
+        if (savedIsKg !== null) setIsKgState(savedIsKg);
+        if (savedMotivationReminder !== null) setMotivationReminderState(savedMotivationReminder);
+        if (savedHarshMotivation !== null) setHarshMotivationState(savedHarshMotivation);
+      } catch (error) {
+        console.error('Failed to load settings:', error);
+      }
     };
     loadSettings();
   }, []);
 
-  // Wrapper functions to match the expected interface and save to storage
-  const setIsDarkMode = (value: boolean) => {
+  // Wrapper functions to match the expected interface and save to secure storage
+  const setIsDarkMode = async (value: boolean) => {
     setIsDarkModeState(value);
-    storageService.setItem('isDarkMode', value);
+    await storageService.setItem('isDarkMode', value);
   };
   
-  const setIsKg = (value: boolean) => {
+  const setIsKg = async (value: boolean) => {
     setIsKgState(value);
-    storageService.setItem('isKg', value);
+    await storageService.setItem('isKg', value);
   };
   
-  const setMotivationReminder = (value: boolean) => {
+  const setMotivationReminder = async (value: boolean) => {
     setMotivationReminderState(value);
-    storageService.setItem('motivationReminder', value);
+    await storageService.setItem('motivationReminder', value);
     const notificationService = NotificationService.getInstance();
     if (value) {
-      notificationService.requestPermissions().then(() => {
+      try {
+        await notificationService.requestPermissions();
         notificationService.startMotivationalReminders(true, harshMotivation);
-      });
+      } catch (error) {
+        console.error('Failed to set up motivation reminders:', error);
+      }
     }
   };
   
-  const setHarshMotivation = (value: boolean) => {
+  const setHarshMotivation = async (value: boolean) => {
     setHarshMotivationState(value);
-    storageService.setItem('harshMotivation', value);
+    await storageService.setItem('harshMotivation', value);
   };
 
   useEffect(() => {
