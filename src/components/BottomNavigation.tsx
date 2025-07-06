@@ -27,23 +27,43 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
 
   return (
     <div className={cn(
-      "fixed bottom-0 left-0 right-0 pb-safe",
-      isDarkMode ? "bg-gray-900" : "bg-gray-100"
+      "fixed bottom-0 left-0 right-0 pb-safe backdrop-blur-md border-t",
+      isDarkMode 
+        ? "bg-gray-900/90 border-gray-800" 
+        : "bg-white/90 border-gray-200"
     )}>
-      <div className="flex justify-around py-2 px-2">
+      <div className="flex justify-around py-3 px-4">
         {navItems.map(({ id, icon: Icon, label }) => (
           <button
             key={id}
             onClick={() => onTabChange(id)}
             className={cn(
-              "flex flex-col items-center py-2 px-2 rounded-lg transition-colors text-xs min-w-[60px]",
+              "flex flex-col items-center py-2 px-3 rounded-xl transition-all duration-200 text-xs min-w-[64px] group",
               activeTab === id 
-                ? TAB_THEMES[id].active + " " + TAB_THEMES[id].text
-                : "text-gray-400 hover:text-white"
+                ? cn(
+                    TAB_THEMES[id].active,
+                    TAB_THEMES[id].text,
+                    "shadow-md transform scale-105"
+                  )
+                : cn(
+                    "text-gray-400 hover:text-gray-600 hover:bg-gray-100/50 hover:scale-105",
+                    isDarkMode && "hover:text-gray-300 hover:bg-gray-800/50"
+                  )
             )}
           >
-            <Icon size={18} />
-            <span className="mt-1">{label}</span>
+            <Icon 
+              size={20} 
+              className={cn(
+                "transition-transform duration-200",
+                activeTab === id && "drop-shadow-sm"
+              )} 
+            />
+            <span className={cn(
+              "mt-1 font-medium transition-all duration-200",
+              activeTab === id && "text-shadow"
+            )}>
+              {label}
+            </span>
           </button>
         ))}
       </div>

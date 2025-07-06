@@ -1,4 +1,3 @@
-
 import React, { useState, createContext, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import SupplementsTab from '@/components/SupplementsTab';
@@ -122,8 +121,8 @@ const Index = () => {
       setHarshMotivation 
     }}>
       <div className={cn(
-        "min-h-screen flex flex-col safe-area-inset",
-        isDarkMode ? "bg-black text-white" : "bg-white text-black"
+        "min-h-screen flex flex-col safe-area-inset transition-colors duration-300",
+        isDarkMode ? "bg-gradient-to-br from-gray-900 to-black text-white" : "bg-gradient-to-br from-gray-50 to-white text-gray-900"
       )}>
         <AppHeader
           isDarkMode={isDarkMode}
@@ -132,8 +131,10 @@ const Index = () => {
           onSettingsClick={() => setShowSettings(true)}
         />
 
-        <div className="flex-1 overflow-auto pb-safe-bottom">
-          {renderActiveTab()}
+        <div className="flex-1 overflow-auto pb-safe-bottom px-1">
+          <div className="container mx-auto max-w-6xl">
+            {renderActiveTab()}
+          </div>
         </div>
 
         <BottomNavigation
