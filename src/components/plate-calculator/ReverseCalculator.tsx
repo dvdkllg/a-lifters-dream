@@ -36,6 +36,12 @@ const ReverseCalculator: React.FC<ReverseCalculatorProps> = ({
   isKg,
   setBarWeight
 }) => {
+  const getPlateTextColor = (weight: number) => {
+    if (weight === 2.5) return "text-white";
+    if (weight === 1.25) return "text-black";
+    return "text-black";
+  };
+
   return (
     <Card className={cn(
       "border-orange-800",
@@ -90,7 +96,7 @@ const ReverseCalculator: React.FC<ReverseCalculatorProps> = ({
                   className={cn(
                     "w-12 h-12 rounded-full flex items-center justify-center text-xs font-bold transition-transform hover:scale-105",
                     plate.color,
-                    plate.weight === 2.5 || plate.weight === 1.25 ? "text-white" : "text-black"
+                    getPlateTextColor(plate.weight)
                   )}
                 >
                   {plate.weight}

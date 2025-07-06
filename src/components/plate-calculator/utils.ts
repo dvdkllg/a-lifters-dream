@@ -8,6 +8,7 @@ export function getPlateColor(weight: number, isKgSystem: boolean): string {
       case 10: return 'bg-green-500';
       case 5: return 'bg-gray-100 border-2 border-gray-400';
       case 2.5: return 'bg-black';
+      case 1.25: return 'bg-gray-300';
       default: return 'bg-gray-100 border-2 border-gray-400';
     }
   } else {
