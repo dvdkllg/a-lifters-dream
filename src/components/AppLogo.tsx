@@ -9,7 +9,7 @@ interface AppLogoProps {
 const AppLogo: React.FC<AppLogoProps> = ({ size = 32, className = "" }) => {
   return (
     <img 
-      src="/lovable-uploads/1662ed20-70b5-434a-9547-17d48c3d1e2a.png"
+      src="/lovable-uploads/762242bf-9156-463f-ab66-3b7ae004a168.png"
       alt="A Lifter's Dream Logo"
       width={size} 
       height={size} 

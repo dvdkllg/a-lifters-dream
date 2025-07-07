@@ -1,12 +1,11 @@
 
-import { LocalNotifications, ScheduleEvery } from '@capacitor/local-notifications';
+import { LocalNotifications } from '@capacitor/local-notifications';
 import { Capacitor } from '@capacitor/core';
 import { SecureStorageService } from './secureStorageService';
 
 export class BackgroundService {
   private static instance: BackgroundService;
   private storageService: SecureStorageService;
-  private timerWorker: Worker | null = null;
   private supplementCheckInterval: NodeJS.Timeout | null = null;
   private motivationCheckInterval: NodeJS.Timeout | null = null;
 
@@ -87,7 +86,7 @@ export class BackgroundService {
       if ('Notification' in window && Notification.permission === 'granted') {
         new Notification('Rest Timer Finished!', {
           body: 'Time for your next set!',
-          icon: '/lovable-uploads/1662ed20-70b5-434a-9547-17d48c3d1e2a.png'
+          icon: '/lovable-uploads/762242bf-9156-463f-ab66-3b7ae004a168.png'
         });
       }
     }
@@ -115,7 +114,7 @@ export class BackgroundService {
     const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
     
     for (const supplement of supplements) {
-      if (supplement.scheduleTimes.includes(currentTime)) {
+      if (supplement.scheduleTimes && supplement.scheduleTimes.includes(currentTime)) {
         await this.triggerSupplementNotification(supplement);
       }
     }
@@ -137,7 +136,7 @@ export class BackgroundService {
       if ('Notification' in window && Notification.permission === 'granted') {
         new Notification('Supplement Reminder', {
           body: `Time to take ${supplement.pillsPerDose} ${supplement.name} pill(s)`,
-          icon: '/lovable-uploads/1662ed20-70b5-434a-9547-17d48c3d1e2a.png'
+          icon: '/lovable-uploads/762242bf-9156-463f-ab66-3b7ae004a168.png'
         });
       }
     }
@@ -191,7 +190,7 @@ export class BackgroundService {
       if ('Notification' in window && Notification.permission === 'granted') {
         new Notification('Motivation Reminder', {
           body: message,
-          icon: '/lovable-uploads/1662ed20-70b5-434a-9547-17d48c3d1e2a.png'
+          icon: '/lovable-uploads/762242bf-9156-463f-ab66-3b7ae004a168.png'
         });
       }
     }
@@ -208,9 +207,6 @@ export class BackgroundService {
     }
     if (this.motivationCheckInterval) {
       clearInterval(this.motivationCheckInterval);
-    }
-    if (this.timerWorker) {
-      this.timerWorker.terminate();
     }
   }
 }
