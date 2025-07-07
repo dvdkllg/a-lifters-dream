@@ -35,6 +35,10 @@ const Index = () => {
   const [harshMotivation, setHarshMotivationState] = useState<boolean>(false);
 
   const storageService = SecureStorageService.getInstance();
+  const backgroundService = React.useMemo(() => {
+    const { BackgroundService } = require('@/services/backgroundService');
+    return BackgroundService.getInstance();
+  }, []);
 
   // Load settings from secure storage on component mount
   useEffect(() => {
@@ -54,6 +58,14 @@ const Index = () => {
       }
     };
     loadSettings();
+
+    // Update last app open timestamp
+    backgroundService.updateLastAppOpen();
+
+    // Request notification permissions on web
+    if (!Capacitor.isNativePlatform() && 'Notification' in window) {
+      Notification.requestPermission();
+    }
   }, []);
 
   // Wrapper functions to match the expected interface and save to secure storage

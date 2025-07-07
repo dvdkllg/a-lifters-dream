@@ -24,21 +24,54 @@ const TimerTab = () => {
   const [showTimerOverlay, setShowTimerOverlay] = useState(false);
 
   const storageService = SecureStorageService.getInstance();
+  const backgroundService = React.useMemo(() => {
+    const { BackgroundService } = require('@/services/backgroundService');
+    return BackgroundService.getInstance();
+  }, []);
 
-  // Load presets from secure storage on component mount
+  // Load presets and timer state from secure storage on component mount
   useEffect(() => {
-    const loadPresets = async () => {
+    const loadData = async () => {
       try {
         const savedPresets = await storageService.getItem<number[]>('timerPresets');
         if (savedPresets) {
           setPresets(savedPresets);
         }
+
+        // Load timer state
+        const timerState = await backgroundService.getTimerState();
+        if (timerState) {
+          setTime(timerState.time);
+          setInitialTime(timerState.initialTime);
+          setIsRunning(timerState.isRunning);
+          
+          // Convert time back to input format
+          const hours = Math.floor(timerState.time / 3600);
+          const mins = Math.floor((timerState.time % 3600) / 60);
+          const secs = timerState.time % 60;
+          const inputStr = `${hours.toString().padStart(2, '0')}${mins.toString().padStart(2, '0')}${secs.toString().padStart(2, '0')}`;
+          setTimeInput(inputStr.replace(/^0+/, '') || '0');
+        }
       } catch (error) {
-        console.error('Failed to load timer presets:', error);
+        console.error('Failed to load timer data:', error);
       }
     };
-    loadPresets();
+    loadData();
+
+    // Listen for timer finished event
+    const handleTimerFinished = () => {
+      setShowTimerOverlay(true);
+      setIsRunning(false);
+    };
+
+    window.addEventListener('timerFinished', handleTimerFinished);
+    return () => window.removeEventListener('timerFinished', handleTimerFinished);
   }, []);
+
+  // Save timer state whenever it changes
+  useEffect(() => {
+    backgroundService.saveTimerState(time, isRunning, initialTime);
+  }, [time, isRunning, initialTime]);
 
   // Save presets to secure storage whenever they change
   useEffect(() => {
@@ -56,11 +89,15 @@ const TimerTab = () => {
     let interval: NodeJS.Timeout;
     if (isRunning && time > 0) {
       interval = setInterval(() => {
-        setTime(time => time - 1);
+        setTime(time => {
+          const newTime = time - 1;
+          if (newTime <= 0) {
+            setIsRunning(false);
+            return 0;
+          }
+          return newTime;
+        });
       }, 1000);
-    } else if (time === 0 && isRunning) {
-      setIsRunning(false);
-      handleTimerFinished();
     }
     return () => clearInterval(interval);
   }, [isRunning, time]);
@@ -242,7 +279,7 @@ const TimerTab = () => {
                   <Button
                     onClick={handleStart}
                     className={cn(
-                      "flex items-center space-x-2",
+                      "flex items-center space-x-2 min-h-[44px] px-6",
                       isRunning 
                         ? "bg-red-600 hover:bg-red-700" 
                         : "bg-green-600 hover:bg-green-700"
@@ -255,7 +292,7 @@ const TimerTab = () => {
                   <Button
                     onClick={addMinute}
                     variant="outline"
-                    className="border-green-600 text-green-400 hover:bg-green-600 hover:text-white"
+                    className="border-green-600 text-green-400 hover:bg-green-600 hover:text-white min-h-[44px] px-4"
                   >
                     <Plus size={16} />
                     1:00
@@ -264,7 +301,7 @@ const TimerTab = () => {
                   <Button
                     onClick={handleReset}
                     variant="outline"
-                    className="border-green-600 text-green-400 hover:bg-green-600 hover:text-white"
+                    className="border-green-600 text-green-400 hover:bg-green-600 hover:text-white min-h-[44px] px-4"
                   >
                     <RotateCcw size={16} />
                   </Button>
@@ -286,9 +323,7 @@ const TimerTab = () => {
                     <Button
                       key={num}
                       onClick={() => handleNumberPad(num.toString())}
-                      className={cn(
-                        "h-12 text-lg font-bold bg-green-600 hover:bg-green-700 text-white"
-                      )}
+                      className="h-12 min-h-[44px] text-lg font-bold bg-green-600 hover:bg-green-700 text-white touch-manipulation"
                     >
                       {num}
                     </Button>
@@ -298,19 +333,19 @@ const TimerTab = () => {
                 <div className="grid grid-cols-3 gap-3">
                   <Button
                     onClick={() => handleNumberPad('clear')}
-                    className="h-12 bg-red-600 hover:bg-red-700 text-white font-bold"
+                    className="h-12 min-h-[44px] bg-red-600 hover:bg-red-700 text-white font-bold touch-manipulation"
                   >
                     Clear
                   </Button>
                   <Button
                     onClick={() => handleNumberPad('0')}
-                    className="h-12 text-lg font-bold bg-green-600 hover:bg-green-700 text-white"
+                    className="h-12 min-h-[44px] text-lg font-bold bg-green-600 hover:bg-green-700 text-white touch-manipulation"
                   >
                     0
                   </Button>
                   <Button
                     onClick={() => handleNumberPad('back')}
-                    className="h-12 bg-orange-600 hover:bg-orange-700 text-white font-bold"
+                    className="h-12 min-h-[44px] bg-orange-600 hover:bg-orange-700 text-white font-bold touch-manipulation"
                   >
                     Back
                   </Button>
@@ -331,7 +366,7 @@ const TimerTab = () => {
                   <Button
                     onClick={() => setShowAddPreset(!showAddPreset)}
                     size="sm"
-                    className="bg-green-600 hover:bg-green-700"
+                    className="bg-green-600 hover:bg-green-700 min-h-[44px] min-w-[44px]"
                   >
                     <Plus size={16} />
                   </Button>
@@ -346,14 +381,14 @@ const TimerTab = () => {
                       onChange={(e) => setNewPreset(e.target.value)}
                       placeholder="Seconds"
                       className={cn(
-                        "border-gray-700",
+                        "border-gray-700 min-h-[44px]",
                         isDarkMode ? "bg-gray-800 text-white" : "bg-white text-black"
                       )}
                     />
                     <Button
                       onClick={addPreset}
                       size="sm"
-                      className="w-full bg-green-600 hover:bg-green-700"
+                      className="w-full bg-green-600 hover:bg-green-700 min-h-[44px]"
                     >
                       Add
                     </Button>
@@ -367,7 +402,7 @@ const TimerTab = () => {
                         onClick={() => setPresetTime(seconds)}
                         variant="outline"
                         className={cn(
-                          "flex-1 border-green-600 text-green-400 hover:bg-green-600 hover:text-white",
+                          "flex-1 border-green-600 text-green-400 hover:bg-green-600 hover:text-white min-h-[44px]",
                           isDarkMode ? "bg-gray-800" : "bg-white"
                         )}
                       >
@@ -377,7 +412,7 @@ const TimerTab = () => {
                         onClick={() => removePreset(seconds)}
                         size="sm"
                         variant="outline"
-                        className="border-red-600 text-red-400 hover:bg-red-600 hover:text-white p-2"
+                        className="border-red-600 text-red-400 hover:bg-red-600 hover:text-white p-2 min-h-[44px] min-w-[44px]"
                       >
                         <Trash2 size={14} />
                       </Button>
