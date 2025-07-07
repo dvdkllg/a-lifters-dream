@@ -11,6 +11,7 @@ import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { Capacitor } from '@capacitor/core';
 import TimerOverlay from './TimerOverlay';
 import { SecureStorageService } from '@/services/secureStorageService';
+import { BackgroundService } from '@/services/backgroundService';
 
 const TimerTab = () => {
   const { isDarkMode } = useContext(SettingsContext);
@@ -24,10 +25,7 @@ const TimerTab = () => {
   const [showTimerOverlay, setShowTimerOverlay] = useState(false);
 
   const storageService = SecureStorageService.getInstance();
-  const backgroundService = React.useMemo(() => {
-    const { BackgroundService } = require('@/services/backgroundService');
-    return BackgroundService.getInstance();
-  }, []);
+  const backgroundService = BackgroundService.getInstance();
 
   // Load presets and timer state from secure storage on component mount
   useEffect(() => {

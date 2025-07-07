@@ -14,6 +14,7 @@ import { APP_CONFIG } from '@/constants/app';
 import { TabType, AppSettings } from '@/types/app';
 import { NotificationService } from '@/services/notificationService';
 import { SecureStorageService } from '@/services/secureStorageService';
+import { BackgroundService } from '@/services/backgroundService';
 
 export const SettingsContext = createContext<AppSettings>({
   isDarkMode: APP_CONFIG.defaultSettings.isDarkMode,
@@ -36,10 +37,7 @@ const Index = () => {
   const [harshMotivation, setHarshMotivationState] = useState<boolean>(false);
 
   const storageService = SecureStorageService.getInstance();
-  const backgroundService = React.useMemo(() => {
-    const { BackgroundService } = require('@/services/backgroundService');
-    return BackgroundService.getInstance();
-  }, []);
+  const backgroundService = BackgroundService.getInstance();
 
   // Load settings from secure storage on component mount
   useEffect(() => {
