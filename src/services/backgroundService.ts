@@ -1,4 +1,3 @@
-
 import { LocalNotifications, ScheduleEvery } from '@capacitor/local-notifications';
 import { Capacitor } from '@capacitor/core';
 import { SecureStorageService } from './secureStorageService';
@@ -80,7 +79,6 @@ export class BackgroundService {
           title: 'Rest Timer Finished!',
           body: 'Time for your next set!',
           sound: 'default',
-          foreground: true,
           priority: 5,
           vibration: [500, 200, 500]
         }]
@@ -134,7 +132,6 @@ export class BackgroundService {
           title: 'Supplement Reminder',
           body: `Time to take ${supplement.pillsPerDose} ${supplement.name} pill(s)`,
           sound: 'default',
-          foreground: true,
           priority: 4,
           vibration: [300, 100, 300]
         }]
@@ -191,7 +188,6 @@ export class BackgroundService {
           title: 'Motivation Reminder',
           body: message,
           sound: 'default',
-          foreground: true,
           priority: 3
         }]
       });

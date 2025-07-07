@@ -1,4 +1,5 @@
 import React, { useState, createContext, useEffect } from 'react';
+import { Capacitor } from '@capacitor/core';
 import { cn } from '@/lib/utils';
 import SupplementsTab from '@/components/SupplementsTab';
 import CalculatorTab from '@/components/CalculatorTab';
