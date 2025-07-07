@@ -1,3 +1,4 @@
+
 import { LocalNotifications, ScheduleEvery } from '@capacitor/local-notifications';
 import { Capacitor } from '@capacitor/core';
 import { SecureStorageService } from './secureStorageService';
@@ -78,9 +79,7 @@ export class BackgroundService {
           id: 999,
           title: 'Rest Timer Finished!',
           body: 'Time for your next set!',
-          sound: 'default',
-          priority: 5,
-          vibration: [500, 200, 500]
+          sound: 'default'
         }]
       });
     } else {
@@ -131,9 +130,7 @@ export class BackgroundService {
           id: notificationId,
           title: 'Supplement Reminder',
           body: `Time to take ${supplement.pillsPerDose} ${supplement.name} pill(s)`,
-          sound: 'default',
-          priority: 4,
-          vibration: [300, 100, 300]
+          sound: 'default'
         }]
       });
     } else {
@@ -187,8 +184,7 @@ export class BackgroundService {
           id: 888,
           title: 'Motivation Reminder',
           body: message,
-          sound: 'default',
-          priority: 3
+          sound: 'default'
         }]
       });
     } else {
